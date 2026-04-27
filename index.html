@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NVIDIA GPU 38 &mdash; BFP4 Formats: NVFP4 &amp; MXFP4</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0a0a0a;
+            --bg-card: #0d1117;
+            --bg-code: #161b22;
+            --text-primary: #e6edf3;
+            --text-secondary: #8b949e;
+            --accent: #76B900;
+            --accent-dim: #76B90044;
+            --accent-glow: #76B90033;
+            --border: #21262d;
+            --font-display: 'Space Grotesk', sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+            --font-body: 'Inter', sans-serif;
+            --max-width: 900px;
+        }
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 17px;
+            line-height: 1.7;
+            overflow-x: hidden;
+        }
+
+        /* ── Header ── */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            position: relative;
+        }
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 50%;
+            transform: translateX(-50%);
+            width: 600px; height: 600px;
+            background: radial-gradient(circle, var(--accent-glow) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+        .hero > * { position: relative; z-index: 1; }
+        .series-label {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--accent);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+        .hero h1 {
+            font-family: var(--font-display);
+            font-size: clamp(2rem, 5vw, 3.2rem);
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1.2;
+            margin-bottom: 1rem;
+        }
+        .hero h1 .accent { color: var(--accent); }
+        .hero .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 640px;
+            margin-bottom: 2rem;
+        }
+
+        .tags {
+            display: flex; flex-wrap: wrap; gap: 0.5rem;
+            justify-content: center;
+            margin-bottom: 2.5rem;
+        }
+        .tag {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            border: 1px solid var(--accent);
+            color: var(--accent);
+            background: var(--accent-dim);
+            white-space: nowrap;
+        }
+
+        .pipeline {
+            display: flex; flex-wrap: wrap; align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+            margin-bottom: 1rem;
+            max-width: var(--max-width);
+        }
+        .pipeline-step {
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            padding: 0.3rem 0.7rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+        .pipeline-arrow { color: var(--accent); font-size: 0.9rem; font-weight: 700; }
+
+        /* ── Slides ── */
+        .slide {
+            min-height: 100vh;
+            max-width: var(--max-width);
+            margin: 0 auto;
+            padding: 4rem 1.5rem;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .slide-number {
+            font-family: var(--font-display);
+            font-size: 5rem;
+            font-weight: 700;
+            color: var(--accent-dim);
+            position: absolute;
+            top: 2rem; right: 1.5rem;
+            line-height: 1;
+            user-select: none;
+        }
+        .slide h2 {
+            font-family: var(--font-display);
+            font-size: 1.9rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            line-height: 1.25;
+        }
+        .slide h3 {
+            font-family: var(--font-display);
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+        .slide p { margin-bottom: 1rem; color: var(--text-secondary); }
+        .slide p strong { color: var(--text-primary); }
+        .slide ul, .slide ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+            color: var(--text-secondary);
+        }
+        .slide li { margin-bottom: 0.4rem; }
+        .slide li strong { color: var(--text-primary); }
+
+        /* ── Code Blocks ── */
+        .code-block {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            margin: 1.25rem 0;
+            overflow: hidden;
+        }
+        .code-header {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent);
+            background: rgba(118, 185, 0, 0.08);
+            padding: 0.4rem 1rem;
+            border-bottom: 1px solid var(--border);
+        }
+        .code-block pre { margin: 0; padding: 1rem; overflow-x: auto; }
+        .code-block code {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            color: #c9d1d9;
+        }
+        .kw { color: #ff7b72; }
+        .fn { color: #d2a8ff; }
+        .str { color: #a5d6ff; }
+        .cm { color: #8b949e; font-style: italic; }
+        .num { color: #79c0ff; }
+        .type { color: #ffa657; }
+
+        /* ── Tables ── */
+        .table-wrap {
+            overflow-x: auto;
+            margin: 1.25rem 0;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+        th {
+            background: var(--bg-code);
+            color: var(--accent);
+            font-weight: 600;
+            text-align: left;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border);
+            font-family: var(--font-display);
+            white-space: nowrap;
+        }
+        td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); color: var(--text-secondary); }
+        tr:last-child td { border-bottom: none; }
+        tr:nth-child(even) td { background: rgba(13, 17, 23, 0.5); }
+
+        /* ── Diagram panels ── */
+        .diagram-grid {
+            display: grid;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+            padding: 1.5rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+        }
+        .diagram-grid.cols-2 { grid-template-columns: 1fr 1fr; }
+        .diagram-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+        .diagram-panel {
+            padding: 1rem;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+        }
+        .diagram-panel.accent-border { border-left: 3px solid var(--accent); }
+        .diagram-panel h4 {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+        }
+        .diagram-panel p, .diagram-panel ul { font-size: 0.85rem; }
+
+        /* ── Callout ── */
+        .callout {
+            background: var(--bg-card);
+            border-left: 3px solid var(--accent);
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin: 1.25rem 0;
+        }
+        .callout p { margin-bottom: 0; }
+        .callout .callout-label {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: var(--accent);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 0.3rem;
+        }
+
+        /* ── Contents list ── */
+        .contents-list {
+            list-style: none;
+            padding-left: 0;
+            counter-reset: contents;
+        }
+        .contents-list li {
+            counter-increment: contents;
+            padding: 0.6rem 0;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; gap: 1rem;
+        }
+        .contents-list li:last-child { border-bottom: none; }
+        .contents-list li::before {
+            content: counter(contents, decimal-leading-zero);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--accent);
+            min-width: 2rem;
+        }
+        .contents-list a {
+            color: var(--text-primary);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .contents-list a:hover { color: var(--accent); }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            padding: 3rem 1.5rem;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            border-top: 1px solid var(--border);
+            max-width: var(--max-width);
+            margin: 0 auto;
+        }
+        .footer a { color: var(--accent); text-decoration: none; }
+        .footer a:hover { text-decoration: underline; }
+
+        /* ── Interactive controls ── */
+        .control-panel {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 1.25rem 0;
+        }
+        .control-row {
+            display: flex; flex-wrap: wrap; align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+        .control-row label {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            min-width: 180px;
+        }
+        .control-row input[type="range"] {
+            flex: 1; min-width: 160px;
+            accent-color: var(--accent);
+        }
+        .control-row input[type="number"], .control-row select {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 4px;
+            padding: 0.3rem 0.5rem;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+        }
+        .control-row .val {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--accent);
+            min-width: 80px;
+            text-align: right;
+        }
+        .btn {
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            padding: 0.4rem 0.9rem;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid var(--accent);
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .btn:hover { background: rgba(118, 185, 0, 0.2); }
+        .result-box {
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--accent);
+            border-radius: 4px;
+            padding: 0.75rem 1rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--text-primary);
+            margin-top: 0.75rem;
+            overflow-x: auto;
+        }
+        .result-box .line-label { color: var(--text-secondary); }
+        .result-box .line-val   { color: var(--accent); font-weight: 600; }
+
+        /* ── Canvas / SVG containers ── */
+        .canvas-wrap {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1.25rem 0;
+            overflow-x: auto;
+        }
+        .canvas-wrap canvas, .canvas-wrap svg {
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+        }
+
+        .badge {
+            display: inline-block;
+            font-family: var(--font-mono);
+            font-size: 0.65rem;
+            padding: 0.1rem 0.45rem;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            color: var(--text-secondary);
+            vertical-align: middle;
+            margin-left: 0.3rem;
+        }
+        .badge.ok    { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
+        .badge.warn  { border-color: #ffa657; color: #ffa657; background: rgba(255,166,87,0.08); }
+        .badge.bad   { border-color: #ff7b72; color: #ff7b72; background: rgba(255,123,114,0.08); }
+
+        /* ── Timeline ── */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+            margin: 1.5rem 0;
+            border-left: 2px solid var(--border);
+        }
+        .timeline-item {
+            position: relative;
+            margin-bottom: 1.25rem;
+            padding-left: 1rem;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2.55rem; top: 0.55rem;
+            width: 12px; height: 12px;
+            background: var(--accent);
+            border: 2px solid var(--bg-primary);
+            border-radius: 50%;
+        }
+        .timeline-year {
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+            color: var(--accent);
+            display: block;
+            margin-bottom: 0.15rem;
+        }
+        .timeline-title {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        .timeline-body {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 0.2rem;
+        }
+
+        /* ── Bar chart bars (CSS) ── */
+        .bar-row {
+            display: grid;
+            grid-template-columns: 130px 1fr 90px;
+            align-items: center;
+            gap: 0.6rem;
+            margin: 0.35rem 0;
+            font-family: var(--font-mono);
+            font-size: 0.78rem;
+        }
+        .bar-row .lbl   { color: var(--text-secondary); text-align: right; }
+        .bar-row .barbg {
+            height: 18px;
+            background: var(--bg-code);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            position: relative;
+            overflow: hidden;
+        }
+        .bar-row .barfill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+            border-right: 2px solid var(--accent);
+        }
+        .bar-row .barfill.warn { background: linear-gradient(90deg, rgba(255,166,87,0.2), #ffa657); border-right-color: #ffa657; }
+        .bar-row .barfill.bad  { background: linear-gradient(90deg, rgba(255,123,114,0.2), #ff7b72); border-right-color: #ff7b72; }
+        .bar-row .num   { color: var(--text-primary); text-align: left; }
+
+        /* ── Responsive ── */
+        @media (max-width: 640px) {
+            .slide { padding: 3rem 1rem; min-height: auto; }
+            .slide-number { font-size: 3rem; top: 1.5rem; right: 1rem; }
+            .slide h2 { font-size: 1.5rem; }
+            .diagram-grid.cols-2, .diagram-grid.cols-3 { grid-template-columns: 1fr; }
+            .pipeline { gap: 0.15rem; }
+            .pipeline-step { font-size: 0.6rem; padding: 0.2rem 0.4rem; }
+            .hero h1 { font-size: 1.8rem; }
+            table { font-size: 0.78rem; }
+            .bar-row { grid-template-columns: 90px 1fr 70px; }
+        }
+    </style>
+</head>
+<body>
+
+<header class="hero">
+    <div class="series-label">NVIDIA GPU Architectures &mdash; Presentation 38</div>
+    <h1><span class="accent">BFP4</span> &mdash; NVFP4 &amp; MXFP4</h1>
+    <p class="subtitle">Block-floating-point at 4&nbsp;bits/element &mdash; how the OCP MX spec and NVIDIA's NVFP4 work, where they live in Blackwell's 5th-gen tensor cores, and how they compare to FP8, INT4 and BF16.</p>
+
+    <div class="tags">
+        <span class="tag">BFP</span><span class="tag">MXFP4</span><span class="tag">NVFP4</span>
+        <span class="tag">FP4 E2M1</span><span class="tag">Blackwell</span><span class="tag">5th-Gen Tensor Cores</span>
+    </div>
+
+    <div class="pipeline">
+        <span class="pipeline-step">Why 4-bit</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">History</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">BFP idea</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">FP4 element</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">MXFP4</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">NVFP4</span>
+        <span class="pipeline-arrow">&rarr;</span>
+        <span class="pipeline-step">Compare</span>
+    </div>
+</header>
+
+<section class="slide" id="slide-00">
+    <div class="slide-number">00</div>
+    <h2>Topics</h2>
+    <ul class="contents-list">
+        <li><a href="#slide-01">Why a 4-bit block format</a></li>
+        <li><a href="#slide-02">A short history of block floating point</a></li>
+        <li><a href="#slide-03">The block-floating-point idea</a></li>
+        <li><a href="#slide-04">FP4 E2M1 &mdash; the element</a></li>
+        <li><a href="#slide-05">MXFP4 &mdash; the OCP microscaling spec</a></li>
+        <li><a href="#slide-06">NVFP4 &mdash; NVIDIA's two-level scaled variant</a></li>
+        <li><a href="#slide-07">MXFP4 vs NVFP4 side-by-side</a></li>
+        <li><a href="#slide-08">Where it lives &mdash; Blackwell tensor cores &amp; Transformer Engine v2</a></li>
+        <li><a href="#slide-09">Tensor-core throughput across architectures</a></li>
+        <li><a href="#slide-10">Quality &mdash; FP, BFP and integer compared</a></li>
+        <li><a href="#slide-11">Bytes-per-parameter &amp; bandwidth wins</a></li>
+        <li><a href="#slide-12">Interactive: decode a BFP4 block</a></li>
+        <li><a href="#slide-13">Take-aways</a></li>
+    </ul>
+</section>
+
+<section class="slide" id="slide-01">
+    <div class="slide-number">01</div>
+    <h2>Why a 4-bit block format</h2>
+    <p>LLM decoding is dominated by two costs: <strong>HBM bandwidth</strong> (every token reads all the weights) and <strong>tensor-core throughput</strong> (every token does a few hundred GFLOPs). Halving the bytes-per-weight roughly doubles tok/s; halving the bits also doubles peak math on a tensor core that natively supports the format.</p>
+
+    <div class="diagram-grid cols-3">
+        <div class="diagram-panel accent-border"><h4>Memory</h4><p>FP16 70&nbsp;B = 140&nbsp;GB. NVFP4 70&nbsp;B = 39&nbsp;GB. The model now fits in a single 48&nbsp;GB card with KV-cache headroom.</p></div>
+        <div class="diagram-panel accent-border"><h4>Compute</h4><p>Blackwell 5th-gen tensor cores deliver <strong>2&times; FP8</strong> at FP4. B200 reaches ~9&nbsp;PFLOPS sparse FP4 / ~4.5&nbsp;PFLOPS dense.</p></div>
+        <div class="diagram-panel accent-border"><h4>Quality</h4><p>Naive 4-bit destroys quality. Block-scaling restores it: NVFP4 gets within ~0.1&nbsp;perplexity of FP8 on Llama-3 70&nbsp;B.</p></div>
+    </div>
+
+    <div class="callout">
+        <div class="callout-label">The trick</div>
+        <p>You don't quantise individual numbers to 4 bits. You quantise <em>blocks</em> of numbers, share an exponent / scale across the block, and let the mantissas be 4-bit. The tensor activations &mdash; weights, after RMSNorm &mdash; are locally well-behaved enough that the shared scale absorbs almost all the dynamic range. This is the <strong>block-floating-point</strong> idea, and it is decades old.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-02">
+    <div class="slide-number">02</div>
+    <h2>A short history of block floating point</h2>
+    <p>BFP was invented for fixed-point DSP &mdash; the trick of letting an array share one exponent so the multiplier can stay integer. Modern AI BFP is the same idea, retro-fitted to tensor cores.</p>
+
+    <div class="timeline">
+        <div class="timeline-item">
+            <span class="timeline-year">1965 &mdash; IBM 360/91</span>
+            <div class="timeline-title">Hex floating point with shared exponents on stacked operations</div>
+            <div class="timeline-body">Not strictly BFP, but the lineage starts here &mdash; engineers learned to amortise an exponent across many mantissas to save on adders.</div>
+        </div>
+        <div class="timeline-item">
+            <span class="timeline-year">1980s &mdash; First commercial DSPs</span>
+            <div class="timeline-title">TI TMS320, ADI 21xx, Motorola 56k &mdash; FFT in BFP</div>
+            <div class="timeline-body">Fixed-point hardware ran the FFT butterfly with a per-stage shared exponent, rescaled between stages. This is BFP under another name and is still how most low-power DSP audio runs today.</div>
+        </div>
+        <div class="timeline-item">
+            <span class="timeline-year">2008 &mdash; IEEE 754-2008</span>
+            <div class="timeline-title">FP16 standardised; deep learning imminent</div>
+            <div class="timeline-body">Half-precision becomes the default ML training format on GPUs (P100, V100, then everything Volta+).</div>
+        </div>
+        <div class="timeline-item">
+            <span class="timeline-year">2020 &mdash; Microsoft MSFP</span>
+            <div class="timeline-title">First production BFP for AI inference</div>
+            <div class="timeline-body">Microsoft Research's <em>Microsoft Floating Point</em> (MSFP12 / MSFP11 / MSFP9) shipped on the Brainwave NPUs in Azure. Block-shared 8-bit exponent with 4&ndash;7-bit mantissas. Demonstrated &lt;1% accuracy loss vs FP32 on production transformers.</div>
+        </div>
+        <div class="timeline-item">
+            <span class="timeline-year">2022 &mdash; Hopper FP8</span>
+            <div class="timeline-title">First per-tensor-scaled FP8 on a GPU</div>
+            <div class="timeline-body">H100's 4th-gen tensor cores added FP8 (E4M3 &amp; E5M2) with one FP32 scale per tensor and a Transformer Engine that retunes scales each step. Sets the stage for finer-grained scaling.</div>
+        </div>
+        <div class="timeline-item">
+            <span class="timeline-year">Sept 2023 &mdash; OCP MX spec v1.0</span>
+            <div class="timeline-title">Microscaling Formats for AI &mdash; the open standard</div>
+            <div class="timeline-body">AMD, Arm, Intel, Meta, Microsoft, NVIDIA &amp; Qualcomm publish the Microscaling (MX) specification under the Open Compute Project: six formats &mdash; <strong>MXFP8 (E5M2/E4M3), MXFP6 (E3M2/E2M3), MXFP4 (E2M1), MXINT8</strong> &mdash; all sharing a 32-element block with one E8M0 scale.</div>
+        </div>
+        <div class="timeline-item">
+            <span class="timeline-year">March 2024 &mdash; Blackwell</span>
+            <div class="timeline-title">5th-gen tensor cores &mdash; first GPU with native MXFP4</div>
+            <div class="timeline-body">B100 / B200 / GB200 / RTX 50 / GB10 ship with hardware MMA support for MXFP6 and MXFP4 (and an INT-side MXINT8). The 2nd-gen Transformer Engine drives scale management.</div>
+        </div>
+        <div class="timeline-item">
+            <span class="timeline-year">June 2024 &mdash; NVFP4 disclosed</span>
+            <div class="timeline-title">NVIDIA's higher-accuracy 4-bit variant</div>
+            <div class="timeline-body">A second 4-bit format, also accelerated on Blackwell, with a smaller block (16) and a finer scale (FP8 E4M3 instead of E8M0), plus a per-tensor FP32 macro-scale. Targets training and inference where MXFP4 quality is borderline.</div>
+        </div>
+    </div>
+</section>
+
+<section class="slide" id="slide-03">
+    <div class="slide-number">03</div>
+    <h2>The block-floating-point idea</h2>
+    <p>An ordinary FP number = sign + exponent + mantissa. A <strong>block-floating-point</strong> number = sign + mantissa, with the <em>exponent shared by every element in a block</em>. The encoder finds the largest absolute value in the block, picks a scale (the shared exponent), and divides everything by it; each element is then a small mantissa.</p>
+
+    <div class="canvas-wrap">
+        <svg viewBox="0 0 860 240" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .lbl { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+                .dim { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+                .h   { fill: #76B900; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px; }
+                .scaleblk { fill: rgba(255,166,87,0.18); stroke: #ffa657; }
+                .mantblk  { fill: rgba(118,185,0,0.18);  stroke: #76B900; }
+                .arr { stroke: #76B900; fill: none; stroke-width: 1.6; }
+            </style>
+            <text x="10" y="20" class="h">Per-tensor FP32 (top) &mdash; per-block float (middle) &mdash; per-element FP4 (bottom)</text>
+
+            <text x="10" y="55" class="lbl">tensor-scale</text>
+            <rect x="120" y="40" width="80" height="22" class="scaleblk"/>
+            <text x="125" y="56" class="dim">FP32 (NVFP4)</text>
+
+            <text x="10" y="100" class="lbl">block-scale</text>
+            <g>
+                <rect x="120" y="85" width="40" height="22" class="scaleblk"/>
+                <rect x="170" y="85" width="40" height="22" class="scaleblk"/>
+                <rect x="220" y="85" width="40" height="22" class="scaleblk"/>
+                <rect x="270" y="85" width="40" height="22" class="scaleblk"/>
+                <rect x="320" y="85" width="40" height="22" class="scaleblk"/>
+                <rect x="370" y="85" width="40" height="22" class="scaleblk"/>
+                <rect x="420" y="85" width="40" height="22" class="scaleblk"/>
+                <rect x="470" y="85" width="40" height="22" class="scaleblk"/>
+            </g>
+            <text x="125" y="101" class="dim">E4M3 / E8M0 &times; one per block</text>
+
+            <text x="10" y="160" class="lbl">elements</text>
+            <g>
+                <!-- 64 little FP4 cells in a strip, partitioned into 8 blocks of 8 (visual only) -->
+                <g transform="translate(120,140)">
+                    <!-- 8 blocks × 8 elements each -->
+                </g>
+            </g>
+            <g class="mantblk">
+              <!-- generate 64 boxes via static -->
+              <!-- block 1 -->
+              <rect x="120" y="140" width="10" height="22"/>
+              <rect x="130" y="140" width="10" height="22"/>
+              <rect x="140" y="140" width="10" height="22"/>
+              <rect x="150" y="140" width="10" height="22"/>
+              <rect x="160" y="140" width="10" height="22"/>
+              <rect x="170" y="140" width="10" height="22"/>
+              <rect x="180" y="140" width="10" height="22"/>
+              <rect x="190" y="140" width="10" height="22"/>
+              <!-- block 2 -->
+              <rect x="200" y="140" width="10" height="22"/><rect x="210" y="140" width="10" height="22"/><rect x="220" y="140" width="10" height="22"/><rect x="230" y="140" width="10" height="22"/><rect x="240" y="140" width="10" height="22"/><rect x="250" y="140" width="10" height="22"/><rect x="260" y="140" width="10" height="22"/><rect x="270" y="140" width="10" height="22"/>
+              <!-- block 3 -->
+              <rect x="280" y="140" width="10" height="22"/><rect x="290" y="140" width="10" height="22"/><rect x="300" y="140" width="10" height="22"/><rect x="310" y="140" width="10" height="22"/><rect x="320" y="140" width="10" height="22"/><rect x="330" y="140" width="10" height="22"/><rect x="340" y="140" width="10" height="22"/><rect x="350" y="140" width="10" height="22"/>
+              <!-- block 4 -->
+              <rect x="360" y="140" width="10" height="22"/><rect x="370" y="140" width="10" height="22"/><rect x="380" y="140" width="10" height="22"/><rect x="390" y="140" width="10" height="22"/><rect x="400" y="140" width="10" height="22"/><rect x="410" y="140" width="10" height="22"/><rect x="420" y="140" width="10" height="22"/><rect x="430" y="140" width="10" height="22"/>
+              <rect x="440" y="140" width="10" height="22"/><rect x="450" y="140" width="10" height="22"/><rect x="460" y="140" width="10" height="22"/><rect x="470" y="140" width="10" height="22"/><rect x="480" y="140" width="10" height="22"/><rect x="490" y="140" width="10" height="22"/><rect x="500" y="140" width="10" height="22"/><rect x="510" y="140" width="10" height="22"/>
+            </g>
+            <text x="125" y="178" class="dim">FP4 E2M1 &mdash; 4 bits each</text>
+
+            <!-- decoded value formula -->
+            <text x="10" y="215" class="h">value = tensor_scale &times; block_scale &times; mantissa</text>
+            <text x="10" y="230" class="dim">(NVFP4 has both scales; MXFP4 has only block_scale; legacy DSP BFP has only block_scale and integer mantissa)</text>
+        </svg>
+    </div>
+
+    <h3>Why this beats per-tensor scaling</h3>
+    <ul>
+        <li><strong>Outliers don't pollute the whole tensor.</strong> A single big activation channel forces a large per-tensor scale, which leaves all the small-value weights with too few mantissa bits. With one scale per block of 16/32, only the outlier's block pays the cost.</li>
+        <li><strong>The hardware multiplier stays small.</strong> The dot-product engine multiplies 4-bit mantissas with 4-bit mantissas (or 4&times;FP8), then adds the shared exponents at the end. Per-block scale handling is a fixed cost amortised over 16&ndash;32 multiplies.</li>
+        <li><strong>Calibration is local.</strong> Picking a per-block scale = max-abs(block) is a single-pass operation. No Hessian, no second-order optimisation, no dataset.</li>
+    </ul>
+</section>
+
+<section class="slide" id="slide-04">
+    <div class="slide-number">04</div>
+    <h2>FP4 E2M1 &mdash; the element</h2>
+    <p>Both MXFP4 and NVFP4 elements are <strong>OCP FP4</strong>: 1 sign bit, 2 exponent bits, 1 mantissa bit. The full encoding maps to just 16 distinct values, with subnormals to keep representation around zero.</p>
+
+    <div class="canvas-wrap">
+        <svg viewBox="0 0 860 220" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .s { fill: #ff7b72; }
+                .e { fill: #ffa657; }
+                .m { fill: #76B900; }
+                .lbl  { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+                .dim  { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+                .val  { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-anchor: middle; }
+                .pat  { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; }
+                .h    { fill: #76B900; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
+                .axis { stroke: #21262d; }
+                .tick { stroke: #21262d; stroke-dasharray: 2,3; }
+                .pt   { fill: #76B900; }
+            </style>
+            <text x="10" y="18" class="h">FP4 E2M1 bit layout (top) &mdash; full value lattice (bottom)</text>
+
+            <!-- bit layout -->
+            <text x="10" y="50" class="lbl">FP4</text>
+            <g transform="translate(60,38)">
+                <rect width="20" height="22" class="s"/>
+                <rect x="22" width="40" height="22" class="e"/>
+                <rect x="64" width="20" height="22" class="m"/>
+            </g>
+            <text x="60" y="78" class="dim">s e e m</text>
+            <text x="160" y="50" class="lbl">= 1 sign + 2 exp + 1 mant</text>
+            <text x="160" y="68" class="dim">bias 1, max ±6, finite values only (no Inf, no NaN)</text>
+
+            <!-- number line -->
+            <line x1="60" y1="160" x2="800" y2="160" class="axis"/>
+            <line x1="430" y1="100" x2="430" y2="170" class="tick"/>
+            <text x="430" y="190" class="pat" text-anchor="middle">0</text>
+
+            <!-- positive values -->
+            <g>
+                <circle cx="430" cy="160" r="4" class="pt"/>          <text x="430" y="148" class="val">0</text>           <text x="430" y="200" class="pat">000_</text>
+                <circle cx="488" cy="160" r="4" class="pt"/>          <text x="488" y="148" class="val">0.5</text>         <text x="488" y="200" class="pat">001</text>
+                <circle cx="545" cy="160" r="4" class="pt"/>          <text x="545" y="148" class="val">1</text>           <text x="545" y="200" class="pat">010</text>
+                <circle cx="603" cy="160" r="4" class="pt"/>          <text x="603" y="148" class="val">1.5</text>         <text x="603" y="200" class="pat">011</text>
+                <circle cx="660" cy="160" r="4" class="pt"/>          <text x="660" y="148" class="val">2</text>           <text x="660" y="200" class="pat">100</text>
+                <circle cx="718" cy="160" r="4" class="pt"/>          <text x="718" y="148" class="val">3</text>           <text x="718" y="200" class="pat">101</text>
+                <circle cx="752" cy="160" r="4" class="pt"/>          <text x="752" y="148" class="val">4</text>           <text x="752" y="200" class="pat">110</text>
+                <circle cx="790" cy="160" r="4" class="pt"/>          <text x="790" y="148" class="val">6</text>           <text x="790" y="200" class="pat">111</text>
+            </g>
+            <!-- negatives -->
+            <g>
+                <circle cx="372" cy="160" r="4" class="pt"/>          <text x="372" y="148" class="val">-0.5</text>
+                <circle cx="315" cy="160" r="4" class="pt"/>          <text x="315" y="148" class="val">-1</text>
+                <circle cx="257" cy="160" r="4" class="pt"/>          <text x="257" y="148" class="val">-1.5</text>
+                <circle cx="200" cy="160" r="4" class="pt"/>          <text x="200" y="148" class="val">-2</text>
+                <circle cx="142" cy="160" r="4" class="pt"/>          <text x="142" y="148" class="val">-3</text>
+                <circle cx="108" cy="160" r="4" class="pt"/>          <text x="108" y="148" class="val">-4</text>
+                <circle cx="70"  cy="160" r="4" class="pt"/>          <text x="70"  y="148" class="val">-6</text>
+            </g>
+        </svg>
+    </div>
+
+    <p>Read the lattice: the spacing is logarithmic at the top end (steps of 2) and linear at the bottom (steps of 0.5). That is exactly what activations want &mdash; resolution near zero and headroom for outliers. The total dynamic range of FP4 alone is only 6/0.5&nbsp;=&nbsp;12&times;; <em>the block scale</em> is what stretches that to whatever the tensor needs.</p>
+</section>
+
+<section class="slide" id="slide-05">
+    <div class="slide-number">05</div>
+    <h2>MXFP4 &mdash; the OCP microscaling spec</h2>
+    <p><strong>Block size:</strong> 32 elements. <strong>Shared scale:</strong> one E8M0 byte (8-bit unsigned exponent, no sign, no mantissa &mdash; just <code>2<sup>k-127</sup></code> for k=0..254, plus NaN). <strong>Element:</strong> FP4 E2M1.</p>
+
+    <div class="canvas-wrap">
+        <svg viewBox="0 0 860 200" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .e8 { fill: rgba(255,166,87,0.25); stroke: #ffa657; }
+                .fp4 { fill: rgba(118,185,0,0.18); stroke: #76B900; }
+                .lbl { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+                .dim { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+                .h   { fill: #76B900; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
+            </style>
+            <text x="10" y="20" class="h">One MX block = 1 byte scale + 32 &times; 4-bit elements = 17 bytes total</text>
+
+            <!-- E8M0 scale -->
+            <text x="10" y="55" class="lbl">scale</text>
+            <rect x="60" y="40" width="44" height="26" class="e8"/>
+            <text x="82" y="58" class="dim" text-anchor="middle">E8M0</text>
+
+            <!-- 32 FP4 elements -->
+            <text x="10" y="105" class="lbl">elements (32)</text>
+            <g class="fp4">
+                <!-- generate 32 boxes -->
+                <rect x="120" y="90" width="22" height="26"/>
+                <rect x="143" y="90" width="22" height="26"/>
+                <rect x="166" y="90" width="22" height="26"/>
+                <rect x="189" y="90" width="22" height="26"/>
+                <rect x="212" y="90" width="22" height="26"/>
+                <rect x="235" y="90" width="22" height="26"/>
+                <rect x="258" y="90" width="22" height="26"/>
+                <rect x="281" y="90" width="22" height="26"/>
+                <rect x="304" y="90" width="22" height="26"/>
+                <rect x="327" y="90" width="22" height="26"/>
+                <rect x="350" y="90" width="22" height="26"/>
+                <rect x="373" y="90" width="22" height="26"/>
+                <rect x="396" y="90" width="22" height="26"/>
+                <rect x="419" y="90" width="22" height="26"/>
+                <rect x="442" y="90" width="22" height="26"/>
+                <rect x="465" y="90" width="22" height="26"/>
+                <rect x="488" y="90" width="22" height="26"/>
+                <rect x="511" y="90" width="22" height="26"/>
+                <rect x="534" y="90" width="22" height="26"/>
+                <rect x="557" y="90" width="22" height="26"/>
+                <rect x="580" y="90" width="22" height="26"/>
+                <rect x="603" y="90" width="22" height="26"/>
+                <rect x="626" y="90" width="22" height="26"/>
+                <rect x="649" y="90" width="22" height="26"/>
+                <rect x="672" y="90" width="22" height="26"/>
+                <rect x="695" y="90" width="22" height="26"/>
+                <rect x="718" y="90" width="22" height="26"/>
+                <rect x="741" y="90" width="22" height="26"/>
+                <rect x="764" y="90" width="22" height="26"/>
+                <rect x="787" y="90" width="22" height="26"/>
+                <rect x="810" y="90" width="22" height="26"/>
+                <rect x="833" y="90" width="22" height="26"/>
+            </g>
+            <text x="120" y="135" class="dim">FP4 E2M1, 4 bits each &mdash; 32 elements occupy 16 bytes</text>
+
+            <!-- math -->
+            <text x="10" y="170" class="lbl">x[i] = scale &times; mantissa[i]</text>
+            <text x="10" y="190" class="dim">scale = 2<tspan dy="-3" font-size="9">k-127</tspan><tspan dy="3"> </tspan>, k = 0..254 (k=255 is NaN).  Effective bits/element = 4 + 8/32 = 4.25</text>
+        </svg>
+    </div>
+
+    <h3>The MX family at a glance</h3>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Format</th><th>Element</th><th>Block</th><th>Scale</th><th>Eff.&nbsp;bits/el</th><th>Use</th></tr></thead>
+            <tbody>
+                <tr><td><strong>MXFP8</strong></td><td>FP8 E5M2 or E4M3</td><td>32</td><td>E8M0</td><td>8.25</td><td>Drop-in replacement for Hopper FP8 with hardware-scaled blocks</td></tr>
+                <tr><td><strong>MXFP6</strong></td><td>FP6 E3M2 or E2M3</td><td>32</td><td>E8M0</td><td>6.25</td><td>Quality of FP8 at &frac34; the bytes &mdash; rare in production</td></tr>
+                <tr><td><strong>MXFP4</strong></td><td>FP4 E2M1</td><td>32</td><td>E8M0</td><td>4.25</td><td>Inference workhorse on Blackwell</td></tr>
+                <tr><td><strong>MXINT8</strong></td><td>INT8 (signed)</td><td>32</td><td>E8M0</td><td>8.25</td><td>Integer compute path with shared exponent</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="callout">
+        <div class="callout-label">Why E8M0 (not E4M3) for the scale</div>
+        <p>E8M0 is just an 8-bit power-of-two. Multiplying by it is a shift. The encoder picks the smallest k such that <code>max(|x|) &le; max_FP4 &times; 2<sup>k-127</sup></code>. No mantissa work, no sign, no rounding for the scale itself &mdash; all the rounding lives in the FP4 elements, which is where the hardware quantiser already runs.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-06">
+    <div class="slide-number">06</div>
+    <h2>NVFP4 &mdash; NVIDIA's two-level scaled variant</h2>
+    <p>NVIDIA's variant fixes the two things that bite MXFP4 hardest: <strong>block granularity</strong> (32 is too coarse for some attention layers) and <strong>scale resolution</strong> (a power-of-two scale wastes ~1 bit of mantissa whenever max-abs falls between two powers of two).</p>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>Block size = 16</h4>
+            <p>Half the MX block. Catches narrow outlier channels (e.g. attention head dims of 64 or 128 split over 8/16-element groups). Cost: more scale bytes per tensor.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Two-level scaling</h4>
+            <p><strong>Per-block</strong> scale is FP8 E4M3 (a real float, not power-of-two). <strong>Per-tensor</strong> scale is FP32 (set once by the Transformer Engine, like Hopper FP8). Decode: <code>x = tensor_FP32 &times; block_E4M3 &times; element_FP4</code>.</p>
+        </div>
+    </div>
+
+    <div class="canvas-wrap">
+        <svg viewBox="0 0 860 220" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .ts { fill: rgba(165,214,255,0.18); stroke: #a5d6ff; }
+                .bs { fill: rgba(255,166,87,0.22);  stroke: #ffa657; }
+                .fp4{ fill: rgba(118,185,0,0.18);   stroke: #76B900; }
+                .lbl { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+                .dim { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+                .h   { fill: #76B900; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
+            </style>
+            <text x="10" y="20" class="h">NVFP4 = FP32 tensor scale + FP8 per-16 block scale + FP4 mantissa</text>
+
+            <text x="10" y="55" class="lbl">tensor</text>
+            <rect x="60" y="40" width="80" height="26" class="ts"/>
+            <text x="100" y="58" class="dim" text-anchor="middle">FP32 scale</text>
+
+            <text x="10" y="105" class="lbl">block-scale</text>
+            <g>
+                <rect x="60"  y="90" width="44" height="26" class="bs"/>
+                <rect x="105" y="90" width="44" height="26" class="bs"/>
+                <rect x="150" y="90" width="44" height="26" class="bs"/>
+                <rect x="195" y="90" width="44" height="26" class="bs"/>
+                <rect x="240" y="90" width="44" height="26" class="bs"/>
+                <rect x="285" y="90" width="44" height="26" class="bs"/>
+                <rect x="330" y="90" width="44" height="26" class="bs"/>
+                <rect x="375" y="90" width="44" height="26" class="bs"/>
+            </g>
+            <text x="60" y="133" class="dim">FP8 E4M3 &mdash; one per 16-element block</text>
+
+            <text x="10" y="165" class="lbl">elements</text>
+            <g class="fp4">
+                <!-- 64 FP4 boxes for visual -->
+                <rect x="60"  y="150" width="11" height="26"/>
+                <rect x="71"  y="150" width="11" height="26"/>
+                <rect x="82"  y="150" width="11" height="26"/>
+                <rect x="93"  y="150" width="11" height="26"/>
+                <rect x="105" y="150" width="11" height="26"/>
+                <rect x="116" y="150" width="11" height="26"/>
+                <rect x="127" y="150" width="11" height="26"/>
+                <rect x="138" y="150" width="11" height="26"/>
+                <rect x="150" y="150" width="11" height="26"/>
+                <rect x="161" y="150" width="11" height="26"/>
+                <rect x="172" y="150" width="11" height="26"/>
+                <rect x="183" y="150" width="11" height="26"/>
+                <rect x="195" y="150" width="11" height="26"/>
+                <rect x="206" y="150" width="11" height="26"/>
+                <rect x="217" y="150" width="11" height="26"/>
+                <rect x="228" y="150" width="11" height="26"/>
+                <rect x="240" y="150" width="11" height="26"/>
+                <rect x="251" y="150" width="11" height="26"/>
+                <rect x="262" y="150" width="11" height="26"/>
+                <rect x="273" y="150" width="11" height="26"/>
+                <rect x="285" y="150" width="11" height="26"/>
+                <rect x="296" y="150" width="11" height="26"/>
+                <rect x="307" y="150" width="11" height="26"/>
+                <rect x="318" y="150" width="11" height="26"/>
+                <rect x="330" y="150" width="11" height="26"/>
+                <rect x="341" y="150" width="11" height="26"/>
+                <rect x="352" y="150" width="11" height="26"/>
+                <rect x="363" y="150" width="11" height="26"/>
+                <rect x="375" y="150" width="11" height="26"/>
+                <rect x="386" y="150" width="11" height="26"/>
+                <rect x="397" y="150" width="11" height="26"/>
+                <rect x="408" y="150" width="11" height="26"/>
+            </g>
+            <text x="60" y="195" class="dim">32 FP4 elements (= 2 blocks). Eff. bits/el = 4 + 8/16 + (32 / N_tensor) &asymp; 4.5</text>
+        </svg>
+    </div>
+
+    <h3>What that buys you</h3>
+    <ul>
+        <li><strong>Smaller block (16 vs 32)</strong> means an outlier in one head dim only contaminates 16 elements, not 32. NVIDIA's whitepaper shows attention with 16-element blocks recovers accuracy that MXFP4 (32) loses on long-context reasoning models.</li>
+        <li><strong>FP8 block scale</strong> gives ~22 distinct scale values between any two powers of two. The block can pack mantissas tighter against the FP4 grid, reducing rounding error per element.</li>
+        <li><strong>Per-tensor FP32 macro-scale</strong> lets the Transformer Engine v2 do the same dynamic re-scaling trick as on Hopper FP8 &mdash; you don't lose dynamic range to weight-update drift during training.</li>
+        <li><strong>Cost:</strong> ~4.5 bits/element vs MXFP4's 4.25, so 5&ndash;6% larger weight files. Same tensor-core throughput.</li>
+    </ul>
+
+    <div class="callout">
+        <div class="callout-label">Practical note</div>
+        <p>Both formats are produced by NVIDIA's <strong>Model Optimizer</strong> (and TensorRT-LLM); the export step converts an FP16/BF16 checkpoint into either MXFP4 or NVFP4 with calibration data. Pick NVFP4 for training and quality-critical inference (long-context reasoning, code, math); pick MXFP4 for general-purpose inference and the smallest possible weight footprint.</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-07">
+    <div class="slide-number">07</div>
+    <h2>MXFP4 vs NVFP4 side-by-side</h2>
+    <div class="table-wrap">
+        <table>
+            <thead><tr><th>Property</th><th>MXFP4</th><th>NVFP4</th></tr></thead>
+            <tbody>
+                <tr><td>Standard</td><td>OCP MX v1.0 (open)</td><td>NVIDIA proprietary, Blackwell+</td></tr>
+                <tr><td>Element</td><td>FP4 E2M1</td><td>FP4 E2M1</td></tr>
+                <tr><td>Block size</td><td>32</td><td>16</td></tr>
+                <tr><td>Block scale</td><td>E8M0 (8 bits, power of two)</td><td>FP8 E4M3 (8 bits, real float)</td></tr>
+                <tr><td>Per-tensor scale</td><td>None (one level only)</td><td>FP32 (managed by TE v2)</td></tr>
+                <tr><td>Effective bits/element</td><td>4.25</td><td>~4.5</td></tr>
+                <tr><td>Tensor-core support</td><td>Blackwell 5th-gen MMA</td><td>Blackwell 5th-gen MMA</td></tr>
+                <tr><td>PFLOPS on B200 (sparse)</td><td>~9 PFLOPS</td><td>~9 PFLOPS</td></tr>
+                <tr><td>Quality vs FP8 (Llama-3 70B)</td><td>~0.3&ndash;0.6 PPL gap</td><td>~0.05&ndash;0.15 PPL gap</td></tr>
+                <tr><td>Best fit</td><td>Inference, weight-only quant</td><td>Training, long-context inference</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <h3>Bytes for one 70&nbsp;B-parameter weight tensor</h3>
+    <div class="canvas-wrap">
+        <svg viewBox="0 0 860 200" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .axis { stroke: #21262d; }
+                .lbl  { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+                .val  { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; }
+                .h    { fill: #e6edf3; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
+                .barA { fill: rgba(118,185,0,0.30); stroke: #76B900; }
+                .barB { fill: rgba(255,166,87,0.30); stroke: #ffa657; }
+                .barC { fill: rgba(255,123,114,0.30); stroke: #ff7b72; }
+                .barD { fill: rgba(165,214,255,0.30); stroke: #a5d6ff; }
+            </style>
+            <text x="10" y="18" class="h">70&nbsp;B params (GB)</text>
+            <line x1="170" y1="30" x2="170" y2="180" class="axis"/>
+            <line x1="170" y1="180" x2="820" y2="180" class="axis"/>
+
+            <g><text x="160" y="50" class="lbl" text-anchor="end">FP32</text>
+               <rect x="170" y="38" width="600" height="20" class="barD"/><text x="780" y="53" class="val">280</text></g>
+            <g><text x="160" y="78" class="lbl" text-anchor="end">FP16/BF16</text>
+               <rect x="170" y="66" width="300" height="20" class="barD"/><text x="480" y="81" class="val">140</text></g>
+            <g><text x="160" y="106" class="lbl" text-anchor="end">FP8</text>
+               <rect x="170" y="94" width="150" height="20" class="barB"/><text x="330" y="109" class="val">70</text></g>
+            <g><text x="160" y="134" class="lbl" text-anchor="end">NVFP4</text>
+               <rect x="170" y="122" width="84" height="20" class="barA"/><text x="264" y="137" class="val">39</text></g>
+            <g><text x="160" y="162" class="lbl" text-anchor="end">MXFP4</text>
+               <rect x="170" y="150" width="80" height="20" class="barA"/><text x="260" y="165" class="val">37</text></g>
+        </svg>
+    </div>
+</section>
+
+<section class="slide" id="slide-08">
+    <div class="slide-number">08</div>
+    <h2>Where it lives &mdash; Blackwell tensor cores &amp; Transformer Engine v2</h2>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>5th-gen tensor cores</h4>
+            <p>The MMA pipeline gains an FP4 / FP6 / NVFP4 datapath. The dot-product unit performs <code>4-bit &times; 4-bit &rarr; FP32 partial product</code> with the block scales applied at accumulation. Sparsity (2:4) doubles peak again for FP4.</p>
+            <p style="margin-top:0.5rem;">PTX/SASS exposes new MMA shapes via WGMMA: <code>m64nNk32</code> with <code>.kind::mxf4</code>, <code>.kind::nvf4</code>, <code>.kind::mxf6</code>.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Transformer Engine v2</h4>
+            <p>Manages dynamic per-tensor scales for NVFP4 the same way TE v1 did for FP8 on Hopper &mdash; tracks max-abs across forward/backward passes, picks per-tensor FP32 scales, schedules cast kernels. The block-scale path (E8M0 for MX, E4M3 for NVFP4) is computed inline by the cast kernel.</p>
+        </div>
+    </div>
+
+    <div class="canvas-wrap">
+        <svg viewBox="0 0 860 240" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .box   { fill: #161b22; stroke: #21262d; }
+                .box.a { stroke: #76B900; }
+                .lbl   { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-anchor: middle; }
+                .sub   { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; }
+                .arr   { stroke: #76B900; fill: none; stroke-width: 1.6; marker-end: url(#ah); }
+                .h     { fill: #76B900; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
+            </style>
+            <defs>
+                <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+                    <path d="M0,0 L10,5 L0,10 z" fill="#76B900"/>
+                </marker>
+            </defs>
+            <text x="10" y="20" class="h">Cast &rarr; MMA &rarr; Accumulate (Blackwell, NVFP4 path)</text>
+
+            <rect x="20"  y="50" width="160" height="60" class="box"/>
+            <text x="100" y="78" class="lbl">BF16/FP16 input</text>
+            <text x="100" y="96" class="sub">RMSNorm output</text>
+
+            <rect x="220" y="50" width="180" height="60" class="box a"/>
+            <text x="310" y="72" class="lbl">TE v2 cast kernel</text>
+            <text x="310" y="90" class="sub">find max-abs / 16</text>
+            <text x="310" y="103" class="sub">pick block FP8 scale</text>
+
+            <rect x="440" y="50" width="170" height="60" class="box"/>
+            <text x="525" y="72" class="lbl">NVFP4 tile</text>
+            <text x="525" y="90" class="sub">FP32 + 8&times;FP8 + 128&times;FP4</text>
+
+            <rect x="650" y="50" width="190" height="60" class="box a"/>
+            <text x="745" y="72" class="lbl">5th-gen MMA</text>
+            <text x="745" y="90" class="sub">A &times; B<sup>T</sup>, FP32 acc</text>
+
+            <line x1="180" y1="80" x2="220" y2="80" class="arr"/>
+            <line x1="400" y1="80" x2="440" y2="80" class="arr"/>
+            <line x1="610" y1="80" x2="650" y2="80" class="arr"/>
+
+            <rect x="220" y="150" width="180" height="60" class="box"/>
+            <text x="310" y="172" class="lbl">amax history</text>
+            <text x="310" y="190" class="sub">recipe.fp8_format = NVFP4</text>
+
+            <rect x="440" y="150" width="170" height="60" class="box"/>
+            <text x="525" y="172" class="lbl">memory layout</text>
+            <text x="525" y="190" class="sub">interleaved scale + mantissa</text>
+
+            <line x1="310" y1="110" x2="310" y2="150" class="arr"/>
+            <line x1="525" y1="110" x2="525" y2="150" class="arr"/>
+        </svg>
+    </div>
+
+    <h3>API surface</h3>
+    <div class="code-block">
+        <div class="code-header">Transformer Engine, Blackwell, NVFP4 inference</div>
+        <pre><code><span class="kw">import</span> transformer_engine.pytorch <span class="kw">as</span> te
+<span class="kw">from</span> transformer_engine.common.recipe <span class="kw">import</span> Format, DelayedScaling
+
+recipe = DelayedScaling(fp8_format=Format.<span class="type">NVFP4</span>,
+                        amax_history_len=<span class="num">16</span>,
+                        amax_compute_algo=<span class="str">"max"</span>)
+
+<span class="kw">with</span> te.fp8_autocast(enabled=<span class="kw">True</span>, fp8_recipe=recipe):
+    out = model(input_ids)              <span class="cm"># NVFP4 tensor cores light up</span></code></pre>
+    </div>
+
+    <div class="code-block">
+        <div class="code-header">TensorRT-LLM build with MXFP4 weight-only</div>
+        <pre><code>trtllm-build --checkpoint_dir llama3-70b-fp16 \
+             --quantization mxfp4 \
+             --output_dir engines/llama3-70b-mxfp4 \
+             --gpus 1 \
+             --max_seq_len 8192</code></pre>
+    </div>
+</section>
+
+<section class="slide" id="slide-09">
+    <div class="slide-number">09</div>
+    <h2>Tensor-core throughput across architectures</h2>
+    <p>Peak dense math per GPU, by format. The point is not the absolute numbers (vendor TFLOPs are always optimistic) but the <em>shape of the curve</em>: each generation pushes one new low-precision format into the tensor core, and its peak roughly doubles each time.</p>
+
+    <h3>Volta &rarr; Blackwell, FP16 baseline = 1.0</h3>
+    <div style="margin: 1rem 0; font-family: var(--font-mono); font-size: 0.85rem;">
+        <div class="bar-row"><span class="lbl">V100 FP16</span>      <span class="barbg"><span class="barfill" style="width:8%"></span></span><span class="num">125 TF</span></div>
+        <div class="bar-row"><span class="lbl">A100 FP16</span>      <span class="barbg"><span class="barfill" style="width:20%"></span></span><span class="num">312 TF</span></div>
+        <div class="bar-row"><span class="lbl">A100 INT8</span>      <span class="barbg"><span class="barfill" style="width:40%"></span></span><span class="num">624 TOP</span></div>
+        <div class="bar-row"><span class="lbl">H100 FP16</span>      <span class="barbg"><span class="barfill" style="width:63%"></span></span><span class="num">990 TF</span></div>
+        <div class="bar-row"><span class="lbl">H100 FP8</span>       <span class="barbg"><span class="barfill warn" style="width:100%"></span></span><span class="num">1,979 TF</span></div>
+        <div class="bar-row"><span class="lbl">B200 FP16</span>      <span class="barbg"><span class="barfill" style="width:56%"></span></span><span class="num">2,250 TF</span></div>
+        <div class="bar-row"><span class="lbl">B200 FP8</span>       <span class="barbg"><span class="barfill warn" style="width:100%"></span></span><span class="num">4,500 TF</span></div>
+        <div class="bar-row"><span class="lbl">B200 MXFP6</span>     <span class="barbg"><span class="barfill warn" style="width:100%"></span></span><span class="num">4,500 TF</span></div>
+        <div class="bar-row"><span class="lbl">B200 MXFP4</span>     <span class="barbg"><span class="barfill bad"  style="width:100%"></span></span><span class="num">9,000 TF</span></div>
+        <div class="bar-row"><span class="lbl">B200 NVFP4</span>     <span class="barbg"><span class="barfill bad"  style="width:100%"></span></span><span class="num">9,000 TF</span></div>
+        <div class="bar-row"><span class="lbl">GB10 (Spark) FP4</span><span class="barbg"><span class="barfill" style="width:11%"></span></span><span class="num">~1,000 TF</span></div>
+    </div>
+    <p style="font-size: 0.85rem;">Bars are clipped at 9&nbsp;PFLOPS for visual scale. Sparse (2:4) rates double these numbers across the board on Blackwell. INT4 / INT8 tensor-core support continued from Turing/Ampere into Hopper but is no longer a quality-leading choice for LLMs &mdash; FP4-with-block-scaling is.</p>
+
+    <div class="callout">
+        <div class="callout-label">Read carefully</div>
+        <p>Hopper has <strong>no native FP4 tensor cores</strong> and no MX support &mdash; if you serve MXFP4 weights on H100, the engine will dequantise to FP8 or FP16 before MMA. You get the bandwidth win, not the compute win. To collect both, you need Blackwell (B100/B200/RTX 50/RTX PRO 6000/GB10).</p>
+    </div>
+</section>
+
+<section class="slide" id="slide-10">
+    <div class="slide-number">10</div>
+    <h2>Quality &mdash; FP, BFP and integer compared</h2>
+    <p>Representative <em>WikiText-2 perplexity</em> on Llama-3 70&nbsp;B Instruct (lower is better). Numbers from NVIDIA Model Optimizer benchmarks plus published OpenCompute MX studies; absolute values vary with calibration data and tokeniser, the <em>deltas</em> are the point.</p>
+
+    <div class="canvas-wrap">
+        <svg viewBox="0 0 860 320" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .axis { stroke: #21262d; }
+                .grid { stroke: #21262d; stroke-dasharray: 2,3; }
+                .lbl  { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+                .val  { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; }
+                .h    { fill: #e6edf3; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
+                .b1   { fill: rgba(118,185,0,0.35); stroke: #76B900; }
+                .b2   { fill: rgba(255,166,87,0.35); stroke: #ffa657; }
+                .b3   { fill: rgba(255,123,114,0.35); stroke: #ff7b72; }
+                .b4   { fill: rgba(165,214,255,0.35); stroke: #a5d6ff; }
+            </style>
+            <text x="10" y="18" class="h">Perplexity (left) &mdash; lower is better &mdash; bytes/param (right)</text>
+
+            <line x1="160" y1="30" x2="160" y2="290" class="axis"/>
+            <line x1="160" y1="290" x2="840" y2="290" class="axis"/>
+            <line x1="540" y1="30" x2="540" y2="290" class="grid"/>
+
+            <g><text x="150" y="55" class="lbl" text-anchor="end">FP16 (ref)</text>
+               <rect x="160" y="42" width="220" height="18" class="b1"/><text x="390" y="56" class="val">5.84</text>
+               <rect x="540" y="42" width="60" height="18" class="b4"/><text x="610" y="56" class="val">2.0 B</text></g>
+            <g><text x="150" y="83" class="lbl" text-anchor="end">FP8 (E4M3)</text>
+               <rect x="160" y="70" width="221" height="18" class="b1"/><text x="391" y="84" class="val">5.85</text>
+               <rect x="540" y="70" width="30" height="18" class="b4"/><text x="580" y="84" class="val">1.0 B</text></g>
+            <g><text x="150" y="111" class="lbl" text-anchor="end">NVFP4</text>
+               <rect x="160" y="98" width="223" height="18" class="b1"/><text x="393" y="112" class="val">5.92</text>
+               <rect x="540" y="98" width="13" height="18" class="b4"/><text x="563" y="112" class="val">~0.56 B</text></g>
+            <g><text x="150" y="139" class="lbl" text-anchor="end">MXFP4</text>
+               <rect x="160" y="126" width="232" height="18" class="b2"/><text x="402" y="140" class="val">6.18</text>
+               <rect x="540" y="126" width="13" height="18" class="b4"/><text x="563" y="140" class="val">~0.53 B</text></g>
+            <g><text x="150" y="167" class="lbl" text-anchor="end">MXFP6 (E2M3)</text>
+               <rect x="160" y="154" width="223" height="18" class="b1"/><text x="393" y="168" class="val">5.93</text>
+               <rect x="540" y="154" width="20" height="18" class="b4"/><text x="570" y="168" class="val">~0.78 B</text></g>
+            <g><text x="150" y="195" class="lbl" text-anchor="end">AWQ INT4 (g128)</text>
+               <rect x="160" y="182" width="234" height="18" class="b2"/><text x="404" y="196" class="val">6.21</text>
+               <rect x="540" y="182" width="14" height="18" class="b4"/><text x="564" y="196" class="val">~0.55 B</text></g>
+            <g><text x="150" y="223" class="lbl" text-anchor="end">GPTQ INT4</text>
+               <rect x="160" y="210" width="244" height="18" class="b2"/><text x="414" y="224" class="val">6.34</text>
+               <rect x="540" y="210" width="14" height="18" class="b4"/><text x="564" y="224" class="val">~0.55 B</text></g>
+            <g><text x="150" y="251" class="lbl" text-anchor="end">GGUF q4_K_M</text>
+               <rect x="160" y="238" width="247" height="18" class="b2"/><text x="417" y="252" class="val">6.41</text>
+               <rect x="540" y="238" width="15" height="18" class="b4"/><text x="565" y="252" class="val">~0.6 B</text></g>
+            <g><text x="150" y="279" class="lbl" text-anchor="end">INT4 PTQ naive</text>
+               <rect x="160" y="266" width="320" height="18" class="b3"/><text x="490" y="280" class="val">7.85</text>
+               <rect x="540" y="266" width="13" height="18" class="b4"/><text x="563" y="280" class="val">0.5 B</text></g>
+        </svg>
+    </div>
+
+    <ul>
+        <li><strong>NVFP4 closes 80% of the gap</strong> between MXFP4 and FP8. The two-level scale is what lets it.</li>
+        <li><strong>MXFP4 ties AWQ-INT4 and beats GPTQ-INT4</strong> &mdash; integer quant of the same bit width is no longer the quality leader at 4 bits.</li>
+        <li><strong>Naive PTQ INT4</strong> (no calibration, no learnt scales) is the lower bound and shows how much of the work is in the scaling, not the bits.</li>
+        <li><strong>FP6 fills the gap</strong>: when you can spare ~50% more bytes than FP4 but want better-than-MX-FP4 quality, MXFP6 E2M3 lands almost on FP8.</li>
+    </ul>
+</section>
+
+<section class="slide" id="slide-11">
+    <div class="slide-number">11</div>
+    <h2>Bytes-per-parameter &amp; bandwidth wins</h2>
+
+    <div class="diagram-grid cols-2">
+        <div class="diagram-panel accent-border">
+            <h4>HBM bandwidth as a clock</h4>
+            <p>B200 has 8&nbsp;TB/s HBM3e. A single forward pass of 70&nbsp;B params at FP16 (140&nbsp;GB) takes a hard minimum of <strong>17.5&nbsp;ms</strong>. At NVFP4 (39&nbsp;GB) the floor drops to <strong>4.9&nbsp;ms</strong>. Decode tok/s scales the same way.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Concurrency</h4>
+            <p>NVFP4 frees ~100&nbsp;GB of HBM on a single B200, which is ~2&nbsp;M tokens of paged KV-cache at FP16 KV. That is the difference between 4 concurrent users and 64.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Energy per token</h4>
+            <p>Memory traffic dominates inference energy. 4&times; smaller weights &rarr; ~3.5&times; lower J/token at fixed batch size on Blackwell, before any compute savings.</p>
+        </div>
+        <div class="diagram-panel accent-border">
+            <h4>Compute headroom</h4>
+            <p>9&nbsp;PFLOPS sparse FP4 on B200 means a 70&nbsp;B model's prefill is essentially free even at long context. The bottleneck is back to <em>activation</em> bandwidth and KV access, not weight loading.</p>
+        </div>
+    </div>
+
+    <h3>Effective bits/param across formats</h3>
+    <div style="margin: 1rem 0; font-family: var(--font-mono); font-size: 0.85rem;">
+        <div class="bar-row"><span class="lbl">FP32</span>            <span class="barbg"><span class="barfill bad"  style="width:100%"></span></span><span class="num">32.00</span></div>
+        <div class="bar-row"><span class="lbl">FP16/BF16</span>       <span class="barbg"><span class="barfill bad"  style="width:50%"></span></span><span class="num">16.00</span></div>
+        <div class="bar-row"><span class="lbl">FP8</span>             <span class="barbg"><span class="barfill warn" style="width:25%"></span></span><span class="num">8.00</span></div>
+        <div class="bar-row"><span class="lbl">MXFP8</span>           <span class="barbg"><span class="barfill warn" style="width:26%"></span></span><span class="num">8.25</span></div>
+        <div class="bar-row"><span class="lbl">MXFP6 E2M3</span>      <span class="barbg"><span class="barfill warn" style="width:20%"></span></span><span class="num">6.25</span></div>
+        <div class="bar-row"><span class="lbl">INT4 (g128)</span>     <span class="barbg"><span class="barfill" style="width:13%"></span></span><span class="num">4.13</span></div>
+        <div class="bar-row"><span class="lbl">MXFP4</span>           <span class="barbg"><span class="barfill" style="width:13%"></span></span><span class="num">4.25</span></div>
+        <div class="bar-row"><span class="lbl">NVFP4</span>           <span class="barbg"><span class="barfill" style="width:14%"></span></span><span class="num">4.50</span></div>
+        <div class="bar-row"><span class="lbl">GGUF q4_K_M</span>     <span class="barbg"><span class="barfill" style="width:15%"></span></span><span class="num">~4.80</span></div>
+    </div>
+</section>
+
+<section class="slide" id="slide-12">
+    <div class="slide-number">12</div>
+    <h2>Interactive: decode a BFP4 block</h2>
+    <p>Drive the encoder yourself. Drag the four FP4 mantissas and the block scale; the panel decodes them through the BFP rules and shows the actual real-number values, plus what the same block would look like under MXFP4 vs NVFP4 vs naive INT4 quantisation of the same numbers.</p>
+
+    <div class="control-panel">
+        <div class="control-row">
+            <label for="fmt-pick">Format</label>
+            <select id="fmt-pick">
+                <option value="nvfp4" selected>NVFP4 &mdash; FP32 tensor &times; FP8 block &times; FP4</option>
+                <option value="mxfp4">MXFP4 &mdash; E8M0 block &times; FP4</option>
+                <option value="int4">Naive INT4 (per-tensor scale)</option>
+            </select>
+        </div>
+        <div class="control-row">
+            <label for="bs-scale">Block scale</label>
+            <input type="range" id="bs-scale" min="-4" max="6" step="0.25" value="2"/>
+            <span class="val" id="bs-scale-val">4.00</span>
+        </div>
+        <div class="control-row" id="ts-row">
+            <label for="ts-scale">Tensor scale (FP32)</label>
+            <input type="range" id="ts-scale" min="0.01" max="2" step="0.01" value="1"/>
+            <span class="val" id="ts-scale-val">1.00</span>
+        </div>
+
+        <div class="control-row">
+            <label for="m0">Element 0 (FP4 code 0&ndash;15)</label>
+            <input type="range" id="m0" min="0" max="15" step="1" value="2"/>
+            <span class="val" id="m0-val">010 = +1.0</span>
+        </div>
+        <div class="control-row">
+            <label for="m1">Element 1</label>
+            <input type="range" id="m1" min="0" max="15" step="1" value="3"/>
+            <span class="val" id="m1-val">011 = +1.5</span>
+        </div>
+        <div class="control-row">
+            <label for="m2">Element 2</label>
+            <input type="range" id="m2" min="0" max="15" step="1" value="14"/>
+            <span class="val" id="m2-val">110 = -4.0</span>
+        </div>
+        <div class="control-row">
+            <label for="m3">Element 3</label>
+            <input type="range" id="m3" min="0" max="15" step="1" value="5"/>
+            <span class="val" id="m3-val">101 = +3.0</span>
+        </div>
+        <div id="dec-out" class="result-box"></div>
+    </div>
+
+    <div class="callout">
+        <div class="callout-label">What you should notice</div>
+        <p>Move element 2 to the largest negative (code 15 &rarr; -6) and the block scale to a small power of two. Then switch to <strong>MXFP4</strong> and back to <strong>NVFP4</strong>. Watch the same fixed mantissas change effective values because the scale resolution changes. Switch to <strong>naive INT4</strong> and notice how a single per-tensor scale crushes the dynamic range that the block-shared scale was protecting.</p>
+    </div>
+
+    <script>
+    (function(){
+        // FP4 E2M1 lookup table, code 0..15
+        // Convention used here: bit3=sign, bits2..1=exp, bit0=mantissa
+        // values per spec
+        const FP4 = [
+            +0.0, +0.5, +1.0, +1.5, +2.0, +3.0, +4.0, +6.0,
+            -0.0, -0.5, -1.0, -1.5, -2.0, -3.0, -4.0, -6.0
+        ];
+        const fmtPick = document.getElementById('fmt-pick');
+        const bsScale = document.getElementById('bs-scale');
+        const tsScale = document.getElementById('ts-scale');
+        const tsRow   = document.getElementById('ts-row');
+        const ms = [0,1,2,3].map(i => document.getElementById('m'+i));
+        const mvs = [0,1,2,3].map(i => document.getElementById('m'+i+'-val'));
+        const bsv = document.getElementById('bs-scale-val');
+        const tsv = document.getElementById('ts-scale-val');
+        const out = document.getElementById('dec-out');
+
+        function bin3(n){ return n.toString(2).padStart(3,'0'); }
+        function fmtFloat(v){ return (v>=0?' ':'') + v.toFixed(3); }
+
+        function render(){
+            const fmt = fmtPick.value;
+            const bsLog = parseFloat(bsScale.value);
+            const block_scale_mx = Math.pow(2, Math.round(bsLog));        // E8M0 = power-of-two
+            const block_scale_nv = Math.pow(2, bsLog);                    // FP8 E4M3 ~ continuous (we approximate)
+            const tensor_scale = parseFloat(tsScale.value);
+            const tensor_scale_eff = (fmt === 'nvfp4') ? tensor_scale : 1.0;
+
+            tsRow.style.display = (fmt === 'nvfp4' || fmt === 'int4') ? 'flex' : 'none';
+
+            // pick the actual scale used in decode
+            let use_bs = 1.0;
+            if (fmt === 'mxfp4') use_bs = block_scale_mx;
+            else if (fmt === 'nvfp4') use_bs = block_scale_nv;
+            else use_bs = 1.0; // INT4 has only tensor
+
+            bsv.textContent = (fmt === 'mxfp4' ? block_scale_mx : (fmt === 'nvfp4' ? block_scale_nv : 1)).toFixed(3);
+            tsv.textContent = tensor_scale.toFixed(3);
+
+            // Update mantissa labels
+            const codes = ms.map(s => parseInt(s.value, 10));
+            codes.forEach((c, i) => {
+                const sign = (c & 8) ? '-' : '+';
+                const fp = FP4[c];
+                mvs[i].textContent = bin3(c & 7) + (sign==='-'?' (n)':' (p)') + ' = ' + fmtFloat(fp);
+            });
+
+            // For INT4 we treat the codes as signed 4-bit integers in [-8, 7]
+            const int4_signed = codes.map(c => (c >= 8) ? c - 16 : c);
+
+            // Decoded values per format
+            const decoded = codes.map((c, i) => {
+                if (fmt === 'int4') {
+                    // value = tensor_scale * int4_value
+                    return tensor_scale * int4_signed[i];
+                }
+                // BFP4 path
+                return tensor_scale_eff * use_bs * FP4[c];
+            });
+
+            const lines = [];
+            lines.push('<div><span class="line-label">format    :</span> <span class="line-val">' + fmt.toUpperCase() + '</span></div>');
+            if (fmt !== 'int4') {
+                lines.push('<div><span class="line-label">block scale :</span> ' + (fmt==='mxfp4' ? '2^' + Math.round(bsLog) + ' = ' + block_scale_mx.toFixed(3) + '  (E8M0)' : block_scale_nv.toFixed(3) + '  (FP8 E4M3, approx)') + '</div>');
+            }
+            if (fmt === 'nvfp4' || fmt === 'int4') {
+                lines.push('<div><span class="line-label">tensor scale:</span> ' + tensor_scale.toFixed(3) + '  (FP32)</div>');
+            }
+            lines.push('<div>&nbsp;</div>');
+            lines.push('<div><span class="line-label">code  bits   FP4-val   decoded</span></div>');
+            codes.forEach((c, i) => {
+                const code_str = c.toString(2).padStart(4,'0');
+                const fp4_val  = (fmt === 'int4') ? int4_signed[i].toString().padStart(4,' ') : fmtFloat(FP4[c]);
+                const dec      = fmtFloat(decoded[i]);
+                lines.push('<div>e' + i + '   <span class="line-val">' + code_str + '</span>   ' + fp4_val + '    <span class="line-val">' + dec + '</span></div>');
+            });
+
+            // dynamic range used
+            const decAbs = decoded.map(Math.abs);
+            const usedMax = Math.max(...decAbs);
+            const totalBitsBlock = (fmt === 'mxfp4') ? (8 + 4*4) : (fmt === 'nvfp4' ? (8 + 4*4) : (32 + 4*4));
+            const eff = totalBitsBlock / 4;
+            lines.push('<div>&nbsp;</div>');
+            lines.push('<div><span class="line-label">max abs     :</span> ' + usedMax.toFixed(3) + '</div>');
+            lines.push('<div><span class="line-label">bits/elem   :</span> ' + eff.toFixed(2) + ' (4 elements + ' + (totalBitsBlock - 16) + '-bit shared scale)</div>');
+
+            out.innerHTML = lines.join('');
+        }
+
+        [fmtPick, bsScale, tsScale, ...ms].forEach(el => el.addEventListener('input', render));
+        render();
+    })();
+    </script>
+</section>
+
+<section class="slide" id="slide-13">
+    <div class="slide-number">13</div>
+    <h2>Take-aways</h2>
+    <ul>
+        <li><strong>BFP is a 40-year-old DSP trick.</strong> Sharing one exponent across a block of mantissas was how the FFT ran on TI TMS320s in the 1980s. AI just rediscovered it under new names &mdash; AFP / MSFP, then OCP MX, then NVFP4.</li>
+        <li><strong>The element format is shared.</strong> Both MXFP4 and NVFP4 use FP4 E2M1 with the same 16 lattice values. The difference is entirely in the scaling: 32-element blocks with E8M0 (MX) vs 16-element blocks with FP8 + FP32 (NV).</li>
+        <li><strong>NVFP4 closes most of the FP8&rarr;FP4 quality gap</strong> at a 5&ndash;6% cost in bytes. Pick it for training and quality-critical inference; pick MXFP4 for the smallest weight footprint.</li>
+        <li><strong>Tensor-core support requires Blackwell.</strong> H100 / H200 (Hopper) can <em>read</em> MXFP4 but they cast it up to FP8 or FP16 before MMA. Only B100 / B200 / GB200 / RTX 50 / RTX PRO 6000 / GB10 (Spark) accelerate the math itself.</li>
+        <li><strong>Memory wins regardless.</strong> Even on Hopper, MXFP4 weight-only quantisation halves bandwidth-bound decode time vs FP8.</li>
+        <li><strong>Sparsity stacks.</strong> 2:4 structured sparsity doubles peak NVFP4/MXFP4 throughput on Blackwell, taking B200 to 9&nbsp;PFLOPS dense / 18&nbsp;PFLOPS sparse FP4.</li>
+    </ul>
+
+    <div class="callout">
+        <div class="callout-label">Where this fits in the series</div>
+        <p>This deck zooms into the bit-level mechanics of the FP4 formats that several earlier decks reference at a higher level &mdash; <a href="https://brendanjameslynskey.github.io/NVIDIA_GPU_03_Tensor_Cores/">Tensor Cores</a> for the MMA pipeline, <a href="https://brendanjameslynskey.github.io/NVIDIA_GPU_09_Blackwell/">Blackwell</a> and <a href="https://brendanjameslynskey.github.io/NVIDIA_GPU_32_Blackwell_Low_Level/">Inside Blackwell</a> for the SM context, <a href="https://brendanjameslynskey.github.io/Local_LLM_07_Quantization/">Quantization for Local Hosting</a> for the practical INT4-vs-FP4 trade-off, and <a href="https://brendanjameslynskey.github.io/Hardware_Aware_Quantisation/">Hardware-Aware Quantisation</a> for the broader number-format landscape.</p>
+    </div>
+</section>
+
+<footer class="footer">
+    <p>Part of the <a href="https://github.com/BrendanJamesLynskey/LLM_Hub_NVIDIA_GPUs">NVIDIA GPU Architectures series</a></p>
+    <p style="margin-top: 0.5rem; font-size: 0.8rem;"><a href="https://github.com/BrendanJamesLynskey/LLMs">LLMs hub</a> &mdash; index of presentation series</p>
+</footer>
+
+<script>
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            const target = document.querySelector(this.getAttribute('href'));
+            if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+    });
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.opacity = '1';
+                entry.target.style.transform = 'translateY(0)';
+            }
+        });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.slide').forEach(slide => {
+        slide.style.opacity = '0';
+        slide.style.transform = 'translateY(30px)';
+        slide.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
+        observer.observe(slide);
+    });
+</script>
+
+</body>
+</html>
