@@ -1132,22 +1132,146 @@ recipe = DelayedScaling(fp8_format=Format.<span class="type">NVFP4</span>,
     <h2>Tensor-core throughput across architectures</h2>
     <p>Peak dense math per GPU, by format. The point is not the absolute numbers (vendor TFLOPs are always optimistic) but the <em>shape of the curve</em>: each generation pushes one new low-precision format into the tensor core, and its peak roughly doubles each time.</p>
 
-    <h3>Peak dense TFLOPs per chip &mdash; <em>log&#8322; scale</em></h3>
-    <p style="font-size: 0.85rem;">Linear scaling buries the small generations (V100 at 125&nbsp;TF would be a 1.4% sliver against the 9000&nbsp;TF max). On a log&#8322; axis, every <strong>doubling</strong> of throughput is the same visual step &mdash; so each halving of bits per element shows up as a clean, repeated jump.</p>
-    <div style="margin: 1rem 0; font-family: var(--font-mono); font-size: 0.85rem;">
-        <div class="bar-row"><span class="lbl">V100 FP16</span>      <span class="barbg"><span class="barfill" style="width:10%"></span></span><span class="num">125 TF</span></div>
-        <div class="bar-row"><span class="lbl">A100 FP16</span>      <span class="barbg"><span class="barfill" style="width:29%"></span></span><span class="num">312 TF</span></div>
-        <div class="bar-row"><span class="lbl">A100 INT8</span>      <span class="barbg"><span class="barfill" style="width:44%"></span></span><span class="num">624 TOP</span></div>
-        <div class="bar-row"><span class="lbl">H100 FP16</span>      <span class="barbg"><span class="barfill" style="width:54%"></span></span><span class="num">990 TF</span></div>
-        <div class="bar-row"><span class="lbl">H100 FP8</span>       <span class="barbg"><span class="barfill warn" style="width:68%"></span></span><span class="num">1,979 TF</span></div>
-        <div class="bar-row"><span class="lbl">B200 FP16</span>      <span class="barbg"><span class="barfill" style="width:71%"></span></span><span class="num">2,250 TF</span></div>
-        <div class="bar-row"><span class="lbl">B200 FP8</span>       <span class="barbg"><span class="barfill warn" style="width:85%"></span></span><span class="num">4,500 TF</span></div>
-        <div class="bar-row"><span class="lbl">B200 MXFP6</span>     <span class="barbg"><span class="barfill warn" style="width:85%"></span></span><span class="num">4,500 TF</span></div>
-        <div class="bar-row"><span class="lbl">B200 MXFP4</span>     <span class="barbg"><span class="barfill bad"  style="width:100%"></span></span><span class="num">9,000 TF</span></div>
-        <div class="bar-row"><span class="lbl">B200 NVFP4</span>     <span class="barbg"><span class="barfill bad"  style="width:100%"></span></span><span class="num">9,000 TF</span></div>
-        <div class="bar-row"><span class="lbl">GB10 (Spark) FP4</span><span class="barbg"><span class="barfill" style="width:54%"></span></span><span class="num">~1,000 TF</span></div>
+    <h3>Peak dense TFLOPs per chip &mdash; <em>log&#8322; scale, axis at top</em></h3>
+
+    <div class="canvas-wrap">
+        <svg viewBox="-30 -10 940 460" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .axisL { stroke: #21262d; stroke-width: 1; }
+                .grid  { stroke: #21262d; stroke-dasharray: 2,3; }
+                .tickL { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; }
+                .rowL  { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+                .numL  { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; }
+                .bar1  { fill: #76B900; stroke: #76B900; stroke-width: 1; }
+                .bar2  { fill: #ffa657; stroke: #ffa657; stroke-width: 1; }
+                .bar3  { fill: #ff7b72; stroke: #ff7b72; stroke-width: 1; }
+                .step  { stroke: rgba(118,185,0,0.35); stroke-width: 1; stroke-dasharray: 4,3; }
+                .stepLbl { fill: #76B900; font-family: 'JetBrains Mono', monospace; font-size: 9px; text-anchor: middle; }
+            </style>
+
+            <!-- Plot area: x = 200..820 (620 wide), y = 50..420.
+                 X axis: log2(TFLOPs), 7 (=128) → 13.5 (~11500). Range = 6.5.
+                 mapping: x = 200 + (log2(v) - 7) / 6.5 * 620
+                 Tick positions:
+                   v=128  → x=200
+                   v=250  → log2(250)=7.97, frac=0.149, x=200+92=292
+                   v=500  → log2(500)=8.97, frac=0.303, x=200+188=388
+                   v=1000 → log2(1000)=9.97, frac=0.457, x=200+283=483
+                   v=2000 → log2(2000)=10.97, frac=0.611, x=200+379=579
+                   v=4000 → log2(4000)=11.97, frac=0.764, x=200+474=674
+                   v=8000 → log2(8000)=12.97, frac=0.918, x=200+569=769
+                   v=16000→ log2(16000)=13.97, would be off, cap at v=11500 ≈ x=820
+            -->
+
+            <!-- X axis -->
+            <line x1="200" y1="40" x2="820" y2="40" class="axisL"/>
+            <text x="510" y="22" class="tickL" font-size="11" fill="#76B900" font-weight="600">peak dense TFLOPs &mdash; log&#8322; (each doubling = same step)</text>
+
+            <!-- Tick marks -->
+            <g>
+                <line x1="200" y1="36" x2="200" y2="44" class="axisL"/><text x="200" y="32" class="tickL">128</text>
+                <line x1="292" y1="36" x2="292" y2="44" class="axisL"/><text x="292" y="32" class="tickL">256</text>
+                <line x1="388" y1="36" x2="388" y2="44" class="axisL"/><text x="388" y="32" class="tickL">512</text>
+                <line x1="483" y1="36" x2="483" y2="44" class="axisL"/><text x="483" y="32" class="tickL">1024</text>
+                <line x1="579" y1="36" x2="579" y2="44" class="axisL"/><text x="579" y="32" class="tickL">2048</text>
+                <line x1="674" y1="36" x2="674" y2="44" class="axisL"/><text x="674" y="32" class="tickL">4096</text>
+                <line x1="769" y1="36" x2="769" y2="44" class="axisL"/><text x="769" y="32" class="tickL">8192</text>
+            </g>
+            <!-- Vertical gridlines extending into plot area -->
+            <line x1="200" y1="50" x2="200" y2="420" class="grid"/>
+            <line x1="292" y1="50" x2="292" y2="420" class="grid"/>
+            <line x1="388" y1="50" x2="388" y2="420" class="grid"/>
+            <line x1="483" y1="50" x2="483" y2="420" class="grid"/>
+            <line x1="579" y1="50" x2="579" y2="420" class="grid"/>
+            <line x1="674" y1="50" x2="674" y2="420" class="grid"/>
+            <line x1="769" y1="50" x2="769" y2="420" class="grid"/>
+
+            <!-- Rows. y stride = 32. First row y=58. -->
+            <!--
+                 widths (precomputed, in viewBox units):
+                   value   log2     x_end   width = x_end - 200
+                   125    6.967     199.3   -0.7    (clamp to 5)
+                   312    8.286     321.0   121
+                   624    9.286     416.4   216
+                   990    9.951     480.0   280
+                   1979   10.951    575.4   375
+                   2250   11.135    593.0   393
+                   4500   12.135    688.4   488
+                   9000   13.135    784.0   584
+                   1000   9.966     481.5   281
+            -->
+
+            <!-- V100 FP16 — 125 TF (slightly under axis start, show min-visible bar) -->
+            <text x="20" y="78" class="rowL">V100 FP16</text>
+            <rect x="200" y="64" width="3" height="20" class="bar1"/>
+            <text x="210" y="78" class="numL">125 TF</text>
+
+            <!-- A100 FP16 — 312 TF -->
+            <text x="20" y="110" class="rowL">A100 FP16</text>
+            <rect x="200" y="96" width="121" height="20" class="bar1"/>
+            <text x="328" y="110" class="numL">312 TF</text>
+
+            <!-- A100 INT8 — 624 TOP -->
+            <text x="20" y="142" class="rowL">A100 INT8</text>
+            <rect x="200" y="128" width="216" height="20" class="bar1"/>
+            <text x="423" y="142" class="numL">624 TOP</text>
+
+            <!-- H100 FP16 — 990 TF -->
+            <text x="20" y="174" class="rowL">H100 FP16</text>
+            <rect x="200" y="160" width="280" height="20" class="bar1"/>
+            <text x="487" y="174" class="numL">990 TF</text>
+
+            <!-- H100 FP8 — 1979 TF (warn = orange, FP8 tier) -->
+            <text x="20" y="206" class="rowL">H100 FP8</text>
+            <rect x="200" y="192" width="375" height="20" class="bar2"/>
+            <text x="582" y="206" class="numL">1,979 TF</text>
+
+            <!-- B200 FP16 — 2250 TF -->
+            <text x="20" y="238" class="rowL">B200 FP16</text>
+            <rect x="200" y="224" width="393" height="20" class="bar1"/>
+            <text x="600" y="238" class="numL">2,250 TF</text>
+
+            <!-- B200 FP8 — 4500 TF -->
+            <text x="20" y="270" class="rowL">B200 FP8</text>
+            <rect x="200" y="256" width="488" height="20" class="bar2"/>
+            <text x="695" y="270" class="numL">4,500 TF</text>
+
+            <!-- B200 MXFP6 — 4500 TF -->
+            <text x="20" y="302" class="rowL">B200 MXFP6</text>
+            <rect x="200" y="288" width="488" height="20" class="bar2"/>
+            <text x="695" y="302" class="numL">4,500 TF</text>
+
+            <!-- B200 MXFP4 — 9000 TF (bar3 = red, top tier) -->
+            <text x="20" y="334" class="rowL">B200 MXFP4</text>
+            <rect x="200" y="320" width="584" height="20" class="bar3"/>
+            <text x="791" y="334" class="numL">9,000 TF</text>
+
+            <!-- B200 NVFP4 — 9000 TF -->
+            <text x="20" y="366" class="rowL">B200 NVFP4</text>
+            <rect x="200" y="352" width="584" height="20" class="bar3"/>
+            <text x="791" y="366" class="numL">9,000 TF</text>
+
+            <!-- GB10 (Spark) FP4 — 1000 TF -->
+            <text x="20" y="398" class="rowL">GB10 (Spark) FP4</text>
+            <rect x="200" y="384" width="281" height="20" class="bar1"/>
+            <text x="488" y="398" class="numL">~1,000 TF</text>
+
+            <!-- Annotation arrows showing the doubling steps are equal -->
+            <line x1="480" y1="172" x2="480" y2="206" class="step"/>
+            <line x1="575" y1="204" x2="575" y2="206" class="step"/>
+            <text x="528" y="200" class="stepLbl">FP16&rarr;FP8: ×2</text>
+
+            <line x1="593" y1="236" x2="593" y2="270" class="step"/>
+            <line x1="688" y1="268" x2="688" y2="270" class="step"/>
+            <text x="640" y="264" class="stepLbl">FP16&rarr;FP8: ×2</text>
+
+            <line x1="688" y1="300" x2="688" y2="334" class="step"/>
+            <line x1="784" y1="332" x2="784" y2="334" class="step"/>
+            <text x="736" y="328" class="stepLbl">FP8&rarr;FP4: ×2</text>
+        </svg>
     </div>
-    <p style="font-size: 0.85rem;">Read the pattern: <strong>each doubling of TFLOPs is ~14% of the bar's width</strong>. So the visual jumps from H100 FP16&rarr;FP8 (990&rarr;1979), and B200 FP8&rarr;FP4 (4500&rarr;9000), are the same length &mdash; that <em>is</em> the "halving bits doubles math" rule made visual. Sparse (2:4) tensor cores would add another doubling on Blackwell. INT4 / INT8 tensor-core support continued from Turing/Ampere into Hopper but is no longer a quality-leading choice for LLMs &mdash; FP4-with-block-scaling is.</p>
+
+    <p style="font-size: 0.85rem;"><strong>Equal-width steps in this chart = equal multiplicative jumps in throughput.</strong> Note that the H100 FP16&rarr;FP8 jump (~95 viewBox units), the B200 FP16&rarr;FP8 jump (also ~95), and the B200 FP8&rarr;FP4 jump (also ~95) are all visibly the same size &mdash; that <em>is</em> the "halving bits per element doubles peak math" rule made visible. Sparse (2:4) tensor cores would add a fourth identical step on Blackwell. INT4 / INT8 tensor-core support continued from Turing/Ampere into Hopper but is no longer a quality-leading choice for LLMs &mdash; FP4-with-block-scaling is. Bar colours: green = FP16/INT8 tier, orange = FP8 tier, red = FP4 tier.</p>
 
     <div class="callout">
         <div class="callout-label">Read carefully</div>
@@ -1238,6 +1362,12 @@ recipe = DelayedScaling(fp8_format=Format.<span class="type">NVFP4</span>,
             <h4>Compute headroom</h4>
             <p>9&nbsp;PFLOPS sparse FP4 on B200 means a 70&nbsp;B model's prefill is essentially free even at long context. The bottleneck is back to <em>activation</em> bandwidth and KV access, not weight loading.</p>
         </div>
+    </div>
+
+    <div class="callout">
+        <div class="callout-label">What "activation bandwidth" means</div>
+        <p><strong>Activation bandwidth</strong> = the HBM bytes per token spent reading and writing the <em>inter-layer activations</em> &mdash; the tensors that flow between operators (residual stream, post-RMSNorm input to each linear, attention scores, GLU intermediates), as distinct from the weight bytes (the static parameters) and the KV-cache bytes (the per-token attention state).</p>
+        <p style="margin-top: 0.4rem;">For one transformer layer at hidden size H, batch B, sequence S, activation dtype <code>d_act</code> bytes, you write &asymp; <code>B &times; S &times; H &times; d_act</code> bytes back to HBM and read them again next layer. With weights at FP16 this is small relative to weight reads; with weights at NVFP4 it's now <em>comparable</em> &mdash; weights dropped to ~0.56 bytes/param while activations are usually still BF16/FP16 (2 bytes/element) for accuracy. Above some sequence length the activation-bandwidth term overtakes weight bandwidth, and the classic "decode is weight-bound" intuition breaks. NVIDIA's FP8 / NVFP4 activation casting in Transformer Engine v2 is partly to address this; not all layers benefit yet.</p>
     </div>
 
     <h3>Effective bits/param across formats &mdash; <em>log&#8322; scale</em></h3>
