@@ -621,6 +621,8 @@
         <li><strong>NVFP4</strong> &mdash; <em>three</em> levels. A per-tensor FP32 scale on top, a per-block FP8 (E4M3) scale in the middle, and a per-element FP4 underneath. The per-tensor scale tracks slow drift across the whole weight matrix during training, the per-block scale absorbs local outliers, and the per-element FP captures fine values inside the block.</li>
     </ul>
 
+    <p><strong>Every level is purely multiplicative &mdash; no offsets anywhere in the hierarchy.</strong> Decode is just <code>value = tensor_scale &times; block_scale &times; element_value</code>; no level adds a zero-point or bias on top. This is one of the things that keeps BFP simpler than asymmetric integer quantisation: INT4 / INT8 schemes (AWQ, GPTQ, GGUF q4_K) often need a per-block <em>zero-point</em> &mdash; an additive offset, costing extra bits per block &mdash; to handle activation distributions that don't sit symmetrically around zero. BFP doesn't need one, because the per-element FP encoding is signed and naturally centred at zero. (The exponent <em>bias</em> inside the FP4 element encoding itself &mdash; <code>bias&nbsp;=&nbsp;1</code> for E2M1 &mdash; is a constant of the format, not a per-block or per-tensor parameter.)</p>
+
     <p>The diagram below makes the hierarchy concrete: each row is one level, increasing in granularity from the top (one number per tensor) to the bottom (one number per element). Decoding any element is just multiplying its way back up the stack.</p>
 
     <div class="canvas-wrap">
