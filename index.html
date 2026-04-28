@@ -593,7 +593,17 @@
         <div class="timeline-item">
             <span class="timeline-year">June 2024 &mdash; NVFP4 disclosed</span>
             <div class="timeline-title">NVIDIA's higher-accuracy 4-bit variant</div>
-            <div class="timeline-body">A second 4-bit format, also accelerated on Blackwell, with a smaller block (16) and a finer scale (FP8 E4M3 instead of E8M0), plus a per-tensor FP32 macro-scale. Targets training and inference where MXFP4 quality is borderline.</div>
+            <div class="timeline-body">
+                <p style="margin: 0 0 0.5rem 0;">A second 4-bit format, also accelerated on Blackwell, with a smaller block (16) and a finer scale (FP8 E4M3 instead of E8M0), plus a per-tensor FP32 macro-scale.</p>
+                <p style="margin: 0 0 0.5rem 0;"><strong>"Borderline" means the cases MXFP4 measurably hurts but FP8 doesn't.</strong> Specifically:</p>
+                <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.92rem;">
+                    <li><strong>Training</strong> &mdash; gradients have a much wider dynamic range than activations and are full of outliers, so a power-of-two E8M0 scale per 32 elements rounds away too much signal. Errors then compound over millions of steps. NVFP4's FP8 block scale plus FP32 tensor scale lets the Transformer Engine track amax dynamically (the trick that made FP8 training stable on Hopper).</li>
+                    <li><strong>Long-context inference</strong> &mdash; attention scores at 32k+ tokens span a huge range, and small mass on the tail still matters; 32-element blocks blur it.</li>
+                    <li><strong>Reasoning models</strong> (o1, R1-style) &mdash; errors compound across hundreds of generated tokens of internal chain-of-thought, so a 0.3 PPL gap that is invisible on a chat benchmark becomes a measurable accuracy drop on AIME / GPQA.</li>
+                    <li><strong>Models with peaky weight distributions</strong> &mdash; some MoE experts and recent code models have a few channels that are 5&ndash;10&times; the median; 16-element blocks isolate those, 32-element blocks let them dominate.</li>
+                </ul>
+                <p style="margin: 0.5rem 0 0 0;">For pure weight-only inference of a chat model in the &le;32k regime, MXFP4 is usually fine; NVFP4 is the one to reach for everywhere else.</p>
+            </div>
         </div>
     </div>
 </section>
