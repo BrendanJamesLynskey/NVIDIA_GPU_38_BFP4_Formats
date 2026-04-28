@@ -925,16 +925,31 @@
         <div class="callout-label">Practical note</div>
         <p>Both formats are produced by NVIDIA's <strong>Model Optimizer</strong> (and TensorRT-LLM); the export step converts an FP16/BF16 checkpoint into either MXFP4 or NVFP4 with calibration data. Pick NVFP4 for training and quality-critical inference (long-context reasoning, code, math); pick MXFP4 for general-purpose inference and the smallest possible weight footprint.</p>
     </div>
+
+    <div class="callout" style="border-left-color: #ffa657;">
+        <div class="callout-label" style="color: #ffa657;">Open vs proprietary</div>
+        <p><strong>MXFP4</strong> is part of the OCP Microscaling specification (v1.0, Sept&nbsp;2023) &mdash; an open, royalty-free standard published by the Open Compute Project and contributed by AMD, Arm, Intel, Meta, Microsoft, NVIDIA and Qualcomm. Any silicon vendor can implement it. It already appears on NVIDIA Blackwell, and OCP MX support is on the public roadmap of competing accelerators (AMD CDNA&nbsp;4, Intel Gaudi&nbsp;successors, Meta MTIA, AWS Trainium2/3).</p>
+        <p style="margin-top: 0.5rem;"><strong>NVFP4</strong> is <strong>NVIDIA-proprietary</strong>. There is no public specification document, no OCP submission, and no independent implementation: the format is documented only in NVIDIA's Transformer Engine and Model Optimizer release notes, and the only hardware that decodes it is NVIDIA Blackwell. Other vendors are free to design <em>similar</em> two-level-scaled FP4 schemes (the underlying idea &mdash; block FP plus per-tensor scaling &mdash; is decades old and not novel by itself), but the specific NVFP4 encoding, the "NVFP4" name, and the TE&nbsp;v2 scale-management workflow are NVIDIA's. If you want a portable 4-bit format that runs across vendors, MXFP4 is the only choice today.</p>
+    </div>
 </section>
 
 <section class="slide" id="slide-07">
     <div class="slide-number">07</div>
     <h2>MXFP4 vs NVFP4 side-by-side</h2>
+
+    <div class="callout">
+        <div class="callout-label">Is NVFP4 better than MXFP4?</div>
+        <p style="margin-bottom: 0.4rem;"><strong>For quality &mdash; yes, consistently.</strong> Every published benchmark (NVIDIA Model Optimizer, OCP study, third-party reproductions) shows NVFP4 closer to FP8 than MXFP4 is, by a comfortable margin. The two-level scaling buys back most of what 32-element E8M0 blocks throw away.</p>
+        <p style="margin-bottom: 0.4rem;"><strong>For portability &mdash; no.</strong> MXFP4 is an open, royalty-free OCP standard implemented (or planned) on multiple vendors' silicon; NVFP4 is NVIDIA-only and runs only on Blackwell.</p>
+        <p style="margin-bottom: 0;"><strong>For bytes &mdash; MXFP4 wins.</strong> 4.25 vs 4.5 effective bits per element &mdash; about 5&ndash;6% smaller weight files for MXFP4.</p>
+    </div>
+
     <div class="table-wrap">
         <table>
             <thead><tr><th>Property</th><th>MXFP4</th><th>NVFP4</th></tr></thead>
             <tbody>
-                <tr><td>Standard</td><td>OCP MX v1.0 (open)</td><td>NVIDIA proprietary, Blackwell+</td></tr>
+                <tr><td>Standard / governance</td><td>OCP MX v1.0 (Sept&nbsp;2023) &mdash; open, royalty-free, multi-vendor</td><td>NVIDIA-proprietary &mdash; no public spec document</td></tr>
+                <tr><td>Implemented on which silicon?</td><td>NVIDIA Blackwell today; AMD CDNA&nbsp;4, Intel Gaudi successors, Meta MTIA, AWS Trainium on roadmap</td><td>NVIDIA Blackwell only (B100/B200/GB200/RTX&nbsp;50/RTX&nbsp;PRO 6000/GB10)</td></tr>
                 <tr><td>Element</td><td>FP4 E2M1</td><td>FP4 E2M1</td></tr>
                 <tr><td>Block size</td><td>32</td><td>16</td></tr>
                 <tr><td>Block scale</td><td>E8M0 (8 bits, power of two)</td><td>FP8 E4M3 (8 bits, real float)</td></tr>
@@ -943,7 +958,7 @@
                 <tr><td>Tensor-core support</td><td>Blackwell 5th-gen MMA</td><td>Blackwell 5th-gen MMA</td></tr>
                 <tr><td>PFLOPS on B200 (sparse)</td><td>~9 PFLOPS</td><td>~9 PFLOPS</td></tr>
                 <tr><td>Quality vs FP8 (Llama-3 70B)</td><td>~0.3&ndash;0.6 PPL gap</td><td>~0.05&ndash;0.15 PPL gap</td></tr>
-                <tr><td>Best fit</td><td>Inference, weight-only quant</td><td>Training, long-context inference</td></tr>
+                <tr><td>Best fit</td><td>Cross-vendor inference, smallest footprint</td><td>Training and quality-critical inference on NVIDIA</td></tr>
             </tbody>
         </table>
     </div>
@@ -1352,7 +1367,8 @@ recipe = DelayedScaling(fp8_format=Format.<span class="type">NVFP4</span>,
     <ul>
         <li><strong>BFP is a 40-year-old DSP trick.</strong> Sharing one exponent across a block of mantissas was how the FFT ran on TI TMS320s in the 1980s. AI just rediscovered it under new names &mdash; AFP / MSFP, then OCP MX, then NVFP4.</li>
         <li><strong>The element format is shared.</strong> Both MXFP4 and NVFP4 use FP4 E2M1 with the same 16 lattice values. The difference is entirely in the scaling: 32-element blocks with E8M0 (MX) vs 16-element blocks with FP8 + FP32 (NV).</li>
-        <li><strong>NVFP4 closes most of the FP8&rarr;FP4 quality gap</strong> at a 5&ndash;6% cost in bytes. Pick it for training and quality-critical inference; pick MXFP4 for the smallest weight footprint.</li>
+        <li><strong>NVFP4 is the higher-quality 4-bit format</strong>, closing most of the FP8&rarr;FP4 gap at a 5&ndash;6% cost in bytes. Pick it for training and quality-critical inference; pick MXFP4 for the smallest weight footprint.</li>
+        <li><strong>MXFP4 is open, NVFP4 is NVIDIA-proprietary.</strong> MXFP4 is an OCP royalty-free standard adopted (or roadmapped) by AMD, Intel, Meta, AWS and others; NVFP4 has no public spec, no OCP submission, and decodes only on NVIDIA Blackwell. If you need the same checkpoint to run on non-NVIDIA accelerators, MXFP4 is currently the only 4-bit option.</li>
         <li><strong>Tensor-core support requires Blackwell.</strong> H100 / H200 (Hopper) can <em>read</em> MXFP4 but they cast it up to FP8 or FP16 before MMA. Only B100 / B200 / GB200 / RTX 50 / RTX PRO 6000 / GB10 (Spark) accelerate the math itself.</li>
         <li><strong>Memory wins regardless.</strong> Even on Hopper, MXFP4 weight-only quantisation halves bandwidth-bound decode time vs FP8.</li>
         <li><strong>Sparsity stacks.</strong> 2:4 structured sparsity doubles peak NVFP4/MXFP4 throughput on Blackwell, taking B200 to 9&nbsp;PFLOPS dense / 18&nbsp;PFLOPS sparse FP4.</li>
