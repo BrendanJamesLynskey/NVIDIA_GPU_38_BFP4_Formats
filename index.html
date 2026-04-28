@@ -529,7 +529,7 @@
 <section class="slide" id="slide-01">
     <div class="slide-number">01</div>
     <h2>Why a 4-bit block format</h2>
-    <p>LLM decoding is dominated by two costs: <strong>HBM bandwidth</strong> (every token reads all the weights) and <strong>tensor-core throughput</strong> (every token does a few hundred GFLOPs). Halving the bytes-per-weight roughly doubles tok/s; halving the bits also doubles peak math on a tensor core that natively supports the format.</p>
+    <p>LLM <strong>training and inference</strong> are both dominated by two costs: <strong>HBM bandwidth</strong> (every step reads all the weights, activations, and &mdash; in training &mdash; gradients) and <strong>tensor-core throughput</strong> (every token or training sample does hundreds of GFLOPs of dense matmul). Halving the bytes-per-element roughly doubles tok/s on the inference side and step/s on the training side; halving the bits also doubles peak math on a tensor core that natively supports the format. BFP4 is the format both NVIDIA and the OCP standard reach for to do that &mdash; and unlike INT4, it works for forward, backward and weight-update passes alike.</p>
 
     <div class="diagram-grid cols-3">
         <div class="diagram-panel accent-border"><h4>Memory</h4><p>FP16 70&nbsp;B = 140&nbsp;GB. NVFP4 70&nbsp;B = 39&nbsp;GB. The model now fits in a single 48&nbsp;GB card with KV-cache headroom.</p></div>
@@ -540,12 +540,13 @@
     <div class="callout">
         <div class="callout-label">The trick</div>
         <p>You don't quantise individual numbers to 4 bits. You quantise <em>blocks</em> of numbers, share one exponent (or scale) across each block, and let the per-element mantissas be 4 bits. This is the <strong>block-floating-point</strong> (BFP) idea, and it is decades old.</p>
-        <p style="margin-top:0.6rem;">Two kinds of tensors get quantised in an LLM:</p>
+        <p style="margin-top:0.6rem;">Three kinds of tensor get quantised in an LLM &mdash; the first two during inference, all three during training:</p>
         <ul style="margin-top:0.4rem; font-size:0.95rem;">
             <li><strong>Weights</strong> &mdash; the <em>learned parameters</em> stored in the checkpoint (the matrices <code>W<sub>Q</sub></code>, <code>W<sub>K</sub></code>, <code>W<sub>V</sub></code>, <code>W<sub>O</sub></code>, <code>W<sub>up</sub></code>, <code>W<sub>down</sub></code>, etc.). Static, set during training, read every token.</li>
             <li><strong>Activations</strong> &mdash; the <em>signals flowing between layers</em>: the output of one operator that becomes the input to the next (the residual stream, the post-RMSNorm input to each linear, the attention scores, the GLU intermediates). Computed fresh each forward pass.</li>
+            <li><strong>Gradients</strong> (training only) &mdash; the partial derivatives flowing back through the network on the backward pass, used to update the weights. Wider dynamic range and more outlier-prone than activations &mdash; this is why NVFP4's two-level scaling matters in training (see slide 02).</li>
         </ul>
-        <p style="margin-top:0.6rem;">Both are locally well-behaved within a small window: weights because training plus weight-decay keeps each row's magnitudes within a narrow range, and activations because <strong>RMSNorm</strong> (or LayerNorm) immediately precedes every linear layer and pins each token's vector to roughly unit RMS. So a single shared scale per 16- or 32-element block absorbs almost all the dynamic range, and the 4-bit mantissas only have to encode the <em>relative</em> values within the block.</p>
+        <p style="margin-top:0.6rem;">All three are locally well-behaved within a small window: weights because training plus weight-decay keeps each row's magnitudes within a narrow range; activations because <strong>RMSNorm</strong> (or LayerNorm) immediately precedes every linear layer and pins each token's vector to roughly unit RMS; and gradients because they inherit that structure with one extra Jacobian. So a single shared scale per 16- or 32-element block absorbs almost all the dynamic range, and the 4-bit mantissas only have to encode the <em>relative</em> values within the block. The same encoding works whether you're serving 1000 tok/s of inference or running an FP4 training step.</p>
     </div>
 </section>
 
@@ -594,8 +595,8 @@
             <span class="timeline-year">June 2024 &mdash; NVFP4 disclosed</span>
             <div class="timeline-title">NVIDIA's higher-accuracy 4-bit variant</div>
             <div class="timeline-body">
-                <p style="margin: 0 0 0.5rem 0;">A second 4-bit format, also accelerated on Blackwell, with a smaller block (16) and a finer scale (FP8 E4M3 instead of E8M0), plus a per-tensor FP32 macro-scale.</p>
-                <p style="margin: 0 0 0.5rem 0;"><strong>"Borderline" means the cases MXFP4 measurably hurts but FP8 doesn't.</strong> Specifically:</p>
+                <p style="margin: 0 0 0.5rem 0;">A second 4-bit format, also accelerated on Blackwell, with a smaller block (16) and a finer scale (FP8 E4M3 instead of E8M0), plus a per-tensor FP32 macro-scale. <strong>Targets training and inference where MXFP4 quality is borderline.</strong></p>
+                <p style="margin: 0 0 0.5rem 0;">"Borderline" here means the cases MXFP4 measurably hurts but FP8 doesn't. Specifically:</p>
                 <ul style="margin: 0; padding-left: 1.2rem; font-size: 0.92rem;">
                     <li><strong>Training</strong> &mdash; gradients have a much wider dynamic range than activations and are full of outliers, so a power-of-two E8M0 scale per 32 elements rounds away too much signal. Errors then compound over millions of steps. NVFP4's FP8 block scale plus FP32 tensor scale lets the Transformer Engine track amax dynamically (the trick that made FP8 training stable on Hopper).</li>
                     <li><strong>Long-context inference</strong> &mdash; attention scores at 32k+ tokens span a huge range, and small mass on the tail still matters; 32-element blocks blur it.</li>
