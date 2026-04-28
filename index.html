@@ -1132,21 +1132,21 @@ recipe = DelayedScaling(fp8_format=Format.<span class="type">NVFP4</span>,
     <h2>Tensor-core throughput across architectures</h2>
     <p>Peak dense math per GPU, by format. The point is not the absolute numbers (vendor TFLOPs are always optimistic) but the <em>shape of the curve</em>: each generation pushes one new low-precision format into the tensor core, and its peak roughly doubles each time.</p>
 
-    <h3>Volta &rarr; Blackwell, FP16 baseline = 1.0</h3>
+    <h3>Peak dense TFLOPs per chip &mdash; bars proportional to 9&nbsp;PFLOPS&nbsp;=&nbsp;100%</h3>
     <div style="margin: 1rem 0; font-family: var(--font-mono); font-size: 0.85rem;">
-        <div class="bar-row"><span class="lbl">V100 FP16</span>      <span class="barbg"><span class="barfill" style="width:8%"></span></span><span class="num">125 TF</span></div>
-        <div class="bar-row"><span class="lbl">A100 FP16</span>      <span class="barbg"><span class="barfill" style="width:20%"></span></span><span class="num">312 TF</span></div>
-        <div class="bar-row"><span class="lbl">A100 INT8</span>      <span class="barbg"><span class="barfill" style="width:40%"></span></span><span class="num">624 TOP</span></div>
-        <div class="bar-row"><span class="lbl">H100 FP16</span>      <span class="barbg"><span class="barfill" style="width:63%"></span></span><span class="num">990 TF</span></div>
-        <div class="bar-row"><span class="lbl">H100 FP8</span>       <span class="barbg"><span class="barfill warn" style="width:100%"></span></span><span class="num">1,979 TF</span></div>
-        <div class="bar-row"><span class="lbl">B200 FP16</span>      <span class="barbg"><span class="barfill" style="width:56%"></span></span><span class="num">2,250 TF</span></div>
-        <div class="bar-row"><span class="lbl">B200 FP8</span>       <span class="barbg"><span class="barfill warn" style="width:100%"></span></span><span class="num">4,500 TF</span></div>
-        <div class="bar-row"><span class="lbl">B200 MXFP6</span>     <span class="barbg"><span class="barfill warn" style="width:100%"></span></span><span class="num">4,500 TF</span></div>
+        <div class="bar-row"><span class="lbl">V100 FP16</span>      <span class="barbg"><span class="barfill" style="width:1.4%"></span></span><span class="num">125 TF</span></div>
+        <div class="bar-row"><span class="lbl">A100 FP16</span>      <span class="barbg"><span class="barfill" style="width:3.5%"></span></span><span class="num">312 TF</span></div>
+        <div class="bar-row"><span class="lbl">A100 INT8</span>      <span class="barbg"><span class="barfill" style="width:6.9%"></span></span><span class="num">624 TOP</span></div>
+        <div class="bar-row"><span class="lbl">H100 FP16</span>      <span class="barbg"><span class="barfill" style="width:11%"></span></span><span class="num">990 TF</span></div>
+        <div class="bar-row"><span class="lbl">H100 FP8</span>       <span class="barbg"><span class="barfill warn" style="width:22%"></span></span><span class="num">1,979 TF</span></div>
+        <div class="bar-row"><span class="lbl">B200 FP16</span>      <span class="barbg"><span class="barfill" style="width:25%"></span></span><span class="num">2,250 TF</span></div>
+        <div class="bar-row"><span class="lbl">B200 FP8</span>       <span class="barbg"><span class="barfill warn" style="width:50%"></span></span><span class="num">4,500 TF</span></div>
+        <div class="bar-row"><span class="lbl">B200 MXFP6</span>     <span class="barbg"><span class="barfill warn" style="width:50%"></span></span><span class="num">4,500 TF</span></div>
         <div class="bar-row"><span class="lbl">B200 MXFP4</span>     <span class="barbg"><span class="barfill bad"  style="width:100%"></span></span><span class="num">9,000 TF</span></div>
         <div class="bar-row"><span class="lbl">B200 NVFP4</span>     <span class="barbg"><span class="barfill bad"  style="width:100%"></span></span><span class="num">9,000 TF</span></div>
         <div class="bar-row"><span class="lbl">GB10 (Spark) FP4</span><span class="barbg"><span class="barfill" style="width:11%"></span></span><span class="num">~1,000 TF</span></div>
     </div>
-    <p style="font-size: 0.85rem;">Bars are clipped at 9&nbsp;PFLOPS for visual scale. Sparse (2:4) rates double these numbers across the board on Blackwell. INT4 / INT8 tensor-core support continued from Turing/Ampere into Hopper but is no longer a quality-leading choice for LLMs &mdash; FP4-with-block-scaling is.</p>
+    <p style="font-size: 0.85rem;">Each bar's length is its TFLOPs divided by 9000 (B200 dense FP4). Sparse (2:4) rates double these numbers across the board on Blackwell. INT4 / INT8 tensor-core support continued from Turing/Ampere into Hopper but is no longer a quality-leading choice for LLMs &mdash; FP4-with-block-scaling is. Each generation's <em>halving</em> of bits doubles peak math: H100 FP16&rarr;FP8 (990&rarr;1979), B200 FP8&rarr;FP4 (4500&rarr;9000).</p>
 
     <div class="callout">
         <div class="callout-label">Read carefully</div>
@@ -1239,18 +1239,19 @@ recipe = DelayedScaling(fp8_format=Format.<span class="type">NVFP4</span>,
         </div>
     </div>
 
-    <h3>Effective bits/param across formats</h3>
+    <h3>Effective bits/param across formats &mdash; bars proportional to FP16&nbsp;=&nbsp;100%</h3>
+    <p style="font-size: 0.85rem;">FP32 (32 bits/param) is omitted from the chart &mdash; it would be 200% and dwarf everything else. The chart is scaled to FP16 so the differences between the 4-bit formats are visible.</p>
     <div style="margin: 1rem 0; font-family: var(--font-mono); font-size: 0.85rem;">
-        <div class="bar-row"><span class="lbl">FP32</span>            <span class="barbg"><span class="barfill bad"  style="width:100%"></span></span><span class="num">32.00</span></div>
-        <div class="bar-row"><span class="lbl">FP16/BF16</span>       <span class="barbg"><span class="barfill bad"  style="width:50%"></span></span><span class="num">16.00</span></div>
-        <div class="bar-row"><span class="lbl">FP8</span>             <span class="barbg"><span class="barfill warn" style="width:25%"></span></span><span class="num">8.00</span></div>
-        <div class="bar-row"><span class="lbl">MXFP8</span>           <span class="barbg"><span class="barfill warn" style="width:26%"></span></span><span class="num">8.25</span></div>
-        <div class="bar-row"><span class="lbl">MXFP6 E2M3</span>      <span class="barbg"><span class="barfill warn" style="width:20%"></span></span><span class="num">6.25</span></div>
-        <div class="bar-row"><span class="lbl">INT4 (g128)</span>     <span class="barbg"><span class="barfill" style="width:13%"></span></span><span class="num">4.13</span></div>
-        <div class="bar-row"><span class="lbl">MXFP4</span>           <span class="barbg"><span class="barfill" style="width:13%"></span></span><span class="num">4.25</span></div>
-        <div class="bar-row"><span class="lbl">NVFP4</span>           <span class="barbg"><span class="barfill" style="width:14%"></span></span><span class="num">4.50</span></div>
-        <div class="bar-row"><span class="lbl">GGUF q4_K_M</span>     <span class="barbg"><span class="barfill" style="width:15%"></span></span><span class="num">~4.80</span></div>
+        <div class="bar-row"><span class="lbl">FP16/BF16</span>       <span class="barbg"><span class="barfill bad"  style="width:100%"></span></span><span class="num">16.00</span></div>
+        <div class="bar-row"><span class="lbl">MXFP8</span>           <span class="barbg"><span class="barfill warn" style="width:51.6%"></span></span><span class="num">8.25</span></div>
+        <div class="bar-row"><span class="lbl">FP8</span>             <span class="barbg"><span class="barfill warn" style="width:50%"></span></span><span class="num">8.00</span></div>
+        <div class="bar-row"><span class="lbl">MXFP6 E2M3</span>      <span class="barbg"><span class="barfill warn" style="width:39%"></span></span><span class="num">6.25</span></div>
+        <div class="bar-row"><span class="lbl">GGUF q4_K_M</span>     <span class="barbg"><span class="barfill" style="width:30%"></span></span><span class="num">~4.80</span></div>
+        <div class="bar-row"><span class="lbl">NVFP4</span>           <span class="barbg"><span class="barfill" style="width:28.1%"></span></span><span class="num">4.50</span></div>
+        <div class="bar-row"><span class="lbl">MXFP4</span>           <span class="barbg"><span class="barfill" style="width:26.6%"></span></span><span class="num">4.25</span></div>
+        <div class="bar-row"><span class="lbl">INT4 (g128)</span>     <span class="barbg"><span class="barfill" style="width:25.8%"></span></span><span class="num">4.13</span></div>
     </div>
+    <p style="font-size: 0.85rem;">The four 4-bit formats span just 4.13&ndash;4.80 bits/param &mdash; a 16% spread &mdash; but every fraction of a bit per parameter matters at 70&nbsp;B&ndash;671&nbsp;B scale (1.4&nbsp;GB per 0.16 bits/param at 70&nbsp;B). The ordering (smallest first) is INT4-g128 &lt; MXFP4 &lt; NVFP4 &lt; GGUF q4_K_M.</p>
 </section>
 
 <section class="slide" id="slide-12">
