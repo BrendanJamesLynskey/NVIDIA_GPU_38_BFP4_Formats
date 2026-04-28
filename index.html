@@ -523,6 +523,7 @@
         <li><a href="#slide-11">Bytes-per-parameter &amp; bandwidth wins</a></li>
         <li><a href="#slide-12">Interactive: decode a BFP4 block</a></li>
         <li><a href="#slide-13">Take-aways</a></li>
+        <li><a href="#refs">References &amp; further reading</a></li>
     </ul>
 </section>
 
@@ -956,7 +957,7 @@
 
     <h3>What that buys you</h3>
     <ul>
-        <li><strong>Smaller block (16 vs 32)</strong> means an outlier in one head dim only contaminates 16 elements, not 32. NVIDIA's whitepaper shows attention with 16-element blocks recovers accuracy that MXFP4 (32) loses on long-context reasoning models.</li>
+        <li><strong>Smaller block (16 vs 32)</strong> means an outlier in one head dim only contaminates 16 elements, not 32. NVIDIA's NVFP4 whitepaper [<a href="#refs">1</a>] shows attention with 16-element blocks recovers accuracy that MXFP4 (32) loses on long-context reasoning models.</li>
         <li><strong>FP8 block scale</strong> gives ~22 distinct scale values between any two powers of two. The block can pack mantissas tighter against the FP4 grid, reducing rounding error per element.</li>
         <li><strong>Per-tensor FP32 macro-scale</strong> lets the Transformer Engine v2 do the same dynamic re-scaling trick as on Hopper FP8 &mdash; you don't lose dynamic range to weight-update drift during training.</li>
         <li><strong>Cost:</strong> ~4.5 bits/element vs MXFP4's 4.25, so 5&ndash;6% larger weight files. Same tensor-core throughput.</li>
@@ -1419,6 +1420,35 @@ recipe = DelayedScaling(fp8_format=Format.<span class="type">NVFP4</span>,
         <div class="callout-label">Where this fits in the series</div>
         <p>This deck zooms into the bit-level mechanics of the FP4 formats that several earlier decks reference at a higher level &mdash; <a href="https://brendanjameslynskey.github.io/NVIDIA_GPU_03_Tensor_Cores/">Tensor Cores</a> for the MMA pipeline, <a href="https://brendanjameslynskey.github.io/NVIDIA_GPU_09_Blackwell/">Blackwell</a> and <a href="https://brendanjameslynskey.github.io/NVIDIA_GPU_32_Blackwell_Low_Level/">Inside Blackwell</a> for the SM context, <a href="https://brendanjameslynskey.github.io/Local_LLM_07_Quantization/">Quantization for Local Hosting</a> for the practical INT4-vs-FP4 trade-off, and <a href="https://brendanjameslynskey.github.io/Hardware_Aware_Quantisation/">Hardware-Aware Quantisation</a> for the broader number-format landscape.</p>
     </div>
+</section>
+
+<section class="slide" id="refs">
+    <div class="slide-number">14</div>
+    <h2>References &amp; further reading</h2>
+
+    <h3>NVIDIA &mdash; NVFP4 and Blackwell</h3>
+    <ol style="padding-left: 1.5rem;">
+        <li id="ref1"><strong>NVIDIA Developer Blog &mdash; <em>Introducing NVFP4 for Efficient and Accurate Low-Precision Inference</em></strong>. The primary public reference for NVFP4: format definition (16-element block, FP8 micro-scale, FP32 macro-scale), measured perplexity vs MXFP4 and FP8 on Llama-family models, Transformer Engine integration. <br><a href="https://developer.nvidia.com/blog/introducing-nvfp4-for-efficient-and-accurate-low-precision-inference/">developer.nvidia.com/blog/introducing-nvfp4-for-efficient-and-accurate-low-precision-inference</a></li>
+        <li><strong>NVIDIA &mdash; <em>Pretraining Large Language Models with NVFP4</em></strong> (research paper, 2025). Training-time stability results, gradient handling, two-level scale management. <br><a href="https://arxiv.org/abs/2509.25149">arxiv.org/abs/2509.25149</a></li>
+        <li><strong>NVIDIA &mdash; <em>Blackwell Architecture Technical Brief</em></strong> (March 2024). 5th-gen tensor cores, MX-FP4 / MX-FP6 datapaths, 2nd-gen Transformer Engine, NVL72. <br><a href="https://resources.nvidia.com/en-us-blackwell-architecture">resources.nvidia.com/en-us-blackwell-architecture</a></li>
+        <li><strong>NVIDIA Transformer Engine documentation</strong> &mdash; FP8 / NVFP4 recipe API, <code>DelayedScaling</code>, <code>Format.NVFP4</code>. <br><a href="https://docs.nvidia.com/deeplearning/transformer-engine/">docs.nvidia.com/deeplearning/transformer-engine</a></li>
+    </ol>
+
+    <h3>Open Compute Project &mdash; MX spec</h3>
+    <ol start="5" style="padding-left: 1.5rem;">
+        <li><strong>OCP &mdash; <em>Microscaling Formats (MX) v1.0 Specification</em></strong> (September 2023). The open multi-vendor spec defining MXFP8, MXFP6, MXFP4, MXINT8 with E8M0 shared scale and 32-element blocks. Contributed by AMD, Arm, Intel, Meta, Microsoft, NVIDIA, Qualcomm. <br><a href="https://www.opencompute.org/documents/ocp-microscaling-formats-mx-v1-0-spec-final-pdf">opencompute.org &mdash; OCP Microscaling Formats (MX) v1.0 Spec</a></li>
+        <li><strong>Rouhani et al. &mdash; <em>Microscaling Data Formats for Deep Learning</em></strong> (2023). The Microsoft / OCP study showing MX formats' accuracy vs FP8 and BF16 baselines across LLMs, vision and recommendation models. <br><a href="https://arxiv.org/abs/2310.10537">arxiv.org/abs/2310.10537</a></li>
+    </ol>
+
+    <h3>Background &mdash; FP8, BFP, integer quantisation</h3>
+    <ol start="7" style="padding-left: 1.5rem;">
+        <li><strong>Micikevicius et al. &mdash; <em>FP8 Formats for Deep Learning</em></strong> (NVIDIA / Arm / Intel, 2022). Justifies E4M3 + E5M2 split, defines the per-tensor scale workflow that NVFP4's macro-scale builds on. <br><a href="https://arxiv.org/abs/2209.05433">arxiv.org/abs/2209.05433</a></li>
+        <li><strong>Microsoft Research &mdash; <em>Pushing the Limits of Narrow Precision Inferencing at Cloud Scale with Microsoft Floating Point</em></strong> (NeurIPS 2020). The MSFP precursor to MX &mdash; first production deployment of block-shared exponents for transformer inference. <br><a href="https://www.microsoft.com/en-us/research/publication/pushing-the-limits-of-narrow-precision-inferencing-at-cloud-scale-with-microsoft-floating-point/">microsoft.com/en-us/research &mdash; MSFP paper</a></li>
+        <li><strong>Frantar et al. &mdash; <em>GPTQ: Accurate Post-Training Quantization for Generative Pre-trained Transformers</em></strong> (ICLR 2023). The INT4 baseline NVFP4 / MXFP4 are usually compared to. <br><a href="https://arxiv.org/abs/2210.17323">arxiv.org/abs/2210.17323</a></li>
+        <li><strong>Lin et al. &mdash; <em>AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration</em></strong> (MLSys 2024). The other INT4 baseline. <br><a href="https://arxiv.org/abs/2306.00978">arxiv.org/abs/2306.00978</a></li>
+    </ol>
+
+    <p style="margin-top: 1.5rem; font-size: 0.85rem;">In-text citation: <code>[1]</code> in the NVFP4 &ldquo;What that buys you&rdquo; bullet on slide&nbsp;06 points to reference 1 above (the NVFP4 developer-blog post). The numerical comparisons on slide&nbsp;10 draw on references 1, 2 and 6.</p>
 </section>
 
 <footer class="footer">
