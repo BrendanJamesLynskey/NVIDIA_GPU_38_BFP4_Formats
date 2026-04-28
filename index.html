@@ -790,7 +790,7 @@
     <p><strong>Block size:</strong> 32 elements. <strong>Shared scale:</strong> one E8M0 byte (8-bit unsigned exponent, no sign, no mantissa &mdash; just <code>2<sup>k-127</sup></code> for k=0..254, plus NaN). <strong>Element:</strong> FP4 E2M1.</p>
 
     <div class="canvas-wrap">
-        <svg viewBox="-25 -10 905 220" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="-30 -10 940 260" xmlns="http://www.w3.org/2000/svg">
             <style>
                 .e8 { fill: rgba(255,166,87,0.25); stroke: #ffa657; }
                 .fp4 { fill: rgba(118,185,0,0.18); stroke: #76B900; }
@@ -798,55 +798,55 @@
                 .dim { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
                 .h   { fill: #76B900; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
             </style>
-            <text x="10" y="20" class="h">One MX block = 1 byte scale + 32 &times; 4-bit elements = 17 bytes total</text>
+            <text x="20" y="22" class="h">One MX block = 1 byte scale + 32 &times; 4-bit elements = 17 bytes total</text>
 
             <!-- E8M0 scale -->
-            <text x="10" y="55" class="lbl">scale</text>
-            <rect x="60" y="40" width="44" height="26" class="e8"/>
-            <text x="82" y="58" class="dim" text-anchor="middle">E8M0</text>
+            <text x="20" y="68" class="lbl">scale</text>
+            <rect x="180" y="52" width="56" height="28" class="e8"/>
+            <text x="208" y="71" class="dim" text-anchor="middle">E8M0</text>
 
-            <!-- 32 FP4 elements -->
-            <text x="10" y="105" class="lbl">elements (32)</text>
+            <!-- 32 FP4 elements (each 18 wide, 2 gap → 20 stride) -->
+            <text x="20" y="118" class="lbl">elements (32)</text>
             <g class="fp4">
-                <!-- generate 32 boxes -->
-                <rect x="120" y="90" width="22" height="26"/>
-                <rect x="143" y="90" width="22" height="26"/>
-                <rect x="166" y="90" width="22" height="26"/>
-                <rect x="189" y="90" width="22" height="26"/>
-                <rect x="212" y="90" width="22" height="26"/>
-                <rect x="235" y="90" width="22" height="26"/>
-                <rect x="258" y="90" width="22" height="26"/>
-                <rect x="281" y="90" width="22" height="26"/>
-                <rect x="304" y="90" width="22" height="26"/>
-                <rect x="327" y="90" width="22" height="26"/>
-                <rect x="350" y="90" width="22" height="26"/>
-                <rect x="373" y="90" width="22" height="26"/>
-                <rect x="396" y="90" width="22" height="26"/>
-                <rect x="419" y="90" width="22" height="26"/>
-                <rect x="442" y="90" width="22" height="26"/>
-                <rect x="465" y="90" width="22" height="26"/>
-                <rect x="488" y="90" width="22" height="26"/>
-                <rect x="511" y="90" width="22" height="26"/>
-                <rect x="534" y="90" width="22" height="26"/>
-                <rect x="557" y="90" width="22" height="26"/>
-                <rect x="580" y="90" width="22" height="26"/>
-                <rect x="603" y="90" width="22" height="26"/>
-                <rect x="626" y="90" width="22" height="26"/>
-                <rect x="649" y="90" width="22" height="26"/>
-                <rect x="672" y="90" width="22" height="26"/>
-                <rect x="695" y="90" width="22" height="26"/>
-                <rect x="718" y="90" width="22" height="26"/>
-                <rect x="741" y="90" width="22" height="26"/>
-                <rect x="764" y="90" width="22" height="26"/>
-                <rect x="787" y="90" width="22" height="26"/>
-                <rect x="810" y="90" width="22" height="26"/>
-                <rect x="833" y="90" width="22" height="26"/>
+                <rect x="180" y="102" width="18" height="28"/>
+                <rect x="200" y="102" width="18" height="28"/>
+                <rect x="220" y="102" width="18" height="28"/>
+                <rect x="240" y="102" width="18" height="28"/>
+                <rect x="260" y="102" width="18" height="28"/>
+                <rect x="280" y="102" width="18" height="28"/>
+                <rect x="300" y="102" width="18" height="28"/>
+                <rect x="320" y="102" width="18" height="28"/>
+                <rect x="340" y="102" width="18" height="28"/>
+                <rect x="360" y="102" width="18" height="28"/>
+                <rect x="380" y="102" width="18" height="28"/>
+                <rect x="400" y="102" width="18" height="28"/>
+                <rect x="420" y="102" width="18" height="28"/>
+                <rect x="440" y="102" width="18" height="28"/>
+                <rect x="460" y="102" width="18" height="28"/>
+                <rect x="480" y="102" width="18" height="28"/>
+                <rect x="500" y="102" width="18" height="28"/>
+                <rect x="520" y="102" width="18" height="28"/>
+                <rect x="540" y="102" width="18" height="28"/>
+                <rect x="560" y="102" width="18" height="28"/>
+                <rect x="580" y="102" width="18" height="28"/>
+                <rect x="600" y="102" width="18" height="28"/>
+                <rect x="620" y="102" width="18" height="28"/>
+                <rect x="640" y="102" width="18" height="28"/>
+                <rect x="660" y="102" width="18" height="28"/>
+                <rect x="680" y="102" width="18" height="28"/>
+                <rect x="700" y="102" width="18" height="28"/>
+                <rect x="720" y="102" width="18" height="28"/>
+                <rect x="740" y="102" width="18" height="28"/>
+                <rect x="760" y="102" width="18" height="28"/>
+                <rect x="780" y="102" width="18" height="28"/>
+                <rect x="800" y="102" width="18" height="28"/>
             </g>
-            <text x="120" y="135" class="dim">FP4 E2M1, 4 bits each &mdash; 32 elements occupy 16 bytes</text>
+            <text x="180" y="152" class="dim">FP4 E2M1 &mdash; 4 bits each, 32 elements occupy 16 bytes</text>
 
-            <!-- math -->
-            <text x="10" y="170" class="lbl">x[i] = scale &times; mantissa[i]</text>
-            <text x="10" y="190" class="dim">scale = 2<tspan dy="-3" font-size="9">k-127</tspan><tspan dy="3"> </tspan>, k = 0..254 (k=255 is NaN).  Effective bits/element = 4 + 8/32 = 4.25</text>
+            <!-- decode formula -->
+            <text x="20" y="195" class="lbl">x[i] = scale &times; mantissa[i]</text>
+            <text x="20" y="220" class="dim">scale = 2<tspan dy="-3" font-size="9">k&minus;127</tspan><tspan dy="3"> </tspan>, k = 0..254 (k=255 reserved for NaN)</text>
+            <text x="20" y="245" class="dim">Effective bits/element = 4 + 8/32 = 4.25</text>
         </svg>
     </div>
 
