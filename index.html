@@ -1370,19 +1370,123 @@ recipe = DelayedScaling(fp8_format=Format.<span class="type">NVFP4</span>,
         <p style="margin-top: 0.4rem;">For one transformer layer at hidden size H, batch B, sequence S, activation dtype <code>d_act</code> bytes, you write &asymp; <code>B &times; S &times; H &times; d_act</code> bytes back to HBM and read them again next layer. With weights at FP16 this is small relative to weight reads; with weights at NVFP4 it's now <em>comparable</em> &mdash; weights dropped to ~0.56 bytes/param while activations are usually still BF16/FP16 (2 bytes/element) for accuracy. Above some sequence length the activation-bandwidth term overtakes weight bandwidth, and the classic "decode is weight-bound" intuition breaks. NVIDIA's FP8 / NVFP4 activation casting in Transformer Engine v2 is partly to address this; not all layers benefit yet.</p>
     </div>
 
-    <h3>Effective bits/param across formats &mdash; <em>log&#8322; scale</em></h3>
-    <p style="font-size: 0.85rem;">FP32 (32 bits/param) is omitted &mdash; it would dominate the chart. On a log&#8322; axis, each <strong>halving</strong> of bits per parameter is the same visual step. The trend is then clear: FP16&nbsp;&rarr;&nbsp;FP8 and FP8&nbsp;&rarr;&nbsp;FP4 are equal-length jumps, with the 4-bit family clustered close together because they're all in the same bit decade.</p>
-    <div style="margin: 1rem 0; font-family: var(--font-mono); font-size: 0.85rem;">
-        <div class="bar-row"><span class="lbl">FP16/BF16</span>       <span class="barbg"><span class="barfill bad"  style="width:100%"></span></span><span class="num">16.00</span></div>
-        <div class="bar-row"><span class="lbl">MXFP8</span>           <span class="barbg"><span class="barfill warn" style="width:73.5%"></span></span><span class="num">8.25</span></div>
-        <div class="bar-row"><span class="lbl">FP8</span>             <span class="barbg"><span class="barfill warn" style="width:72.5%"></span></span><span class="num">8.00</span></div>
-        <div class="bar-row"><span class="lbl">MXFP6 E2M3</span>      <span class="barbg"><span class="barfill warn" style="width:62%"></span></span><span class="num">6.25</span></div>
-        <div class="bar-row"><span class="lbl">GGUF q4_K_M</span>     <span class="barbg"><span class="barfill" style="width:51%"></span></span><span class="num">~4.80</span></div>
-        <div class="bar-row"><span class="lbl">NVFP4</span>           <span class="barbg"><span class="barfill" style="width:48%"></span></span><span class="num">4.50</span></div>
-        <div class="bar-row"><span class="lbl">MXFP4</span>           <span class="barbg"><span class="barfill" style="width:46%"></span></span><span class="num">4.25</span></div>
-        <div class="bar-row"><span class="lbl">INT4 (g128)</span>     <span class="barbg"><span class="barfill" style="width:45%"></span></span><span class="num">4.13</span></div>
+    <h3>Effective bits/param across formats &mdash; <em>log&#8322; scale, axis at top</em></h3>
+
+    <div class="canvas-wrap">
+        <svg viewBox="-30 -10 940 360" xmlns="http://www.w3.org/2000/svg">
+            <style>
+                .axisL { stroke: #21262d; stroke-width: 1; }
+                .grid  { stroke: #21262d; stroke-dasharray: 2,3; }
+                .tickL { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; }
+                .rowL  { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+                .numL  { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; }
+                .bar1  { fill: #76B900; stroke: #76B900; stroke-width: 1; }
+                .bar2  { fill: #ffa657; stroke: #ffa657; stroke-width: 1; }
+                .bar3  { fill: #ff7b72; stroke: #ff7b72; stroke-width: 1; }
+                .step  { stroke: rgba(118,185,0,0.6); stroke-width: 1.5; }
+                .stepLbl { fill: #76B900; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; font-weight: 600; }
+            </style>
+
+            <!-- X axis: log2(bits) from log2(3)=1.585 to log2(16)=4. Range=2.415.
+                 Map to x = [200, 820] (620 wide). Each log2 unit = 257 viewBox units.
+                 So each "halving of bits" is exactly 257 wide.
+                 Ticks at 3, 4, 5, 6, 8, 12, 16 bits/param.
+            -->
+
+            <!-- Title above axis -->
+            <text x="510" y="22" class="tickL" font-size="11" fill="#76B900" font-weight="600">effective bits/param &mdash; log&#8322; (each halving = same step)</text>
+
+            <!-- X axis line and ticks -->
+            <line x1="200" y1="40" x2="820" y2="40" class="axisL"/>
+            <g>
+                <line x1="200" y1="36" x2="200" y2="44" class="axisL"/><text x="200" y="32" class="tickL">3</text>
+                <line x1="307" y1="36" x2="307" y2="44" class="axisL"/><text x="307" y="32" class="tickL">4</text>
+                <line x1="389" y1="36" x2="389" y2="44" class="axisL"/><text x="389" y="32" class="tickL">5</text>
+                <line x1="457" y1="36" x2="457" y2="44" class="axisL"/><text x="457" y="32" class="tickL">6</text>
+                <line x1="564" y1="36" x2="564" y2="44" class="axisL"/><text x="564" y="32" class="tickL">8</text>
+                <line x1="714" y1="36" x2="714" y2="44" class="axisL"/><text x="714" y="32" class="tickL">12</text>
+                <line x1="820" y1="36" x2="820" y2="44" class="axisL"/><text x="820" y="32" class="tickL">16</text>
+            </g>
+
+            <!-- Vertical gridlines -->
+            <line x1="200" y1="50" x2="200" y2="305" class="grid"/>
+            <line x1="307" y1="50" x2="307" y2="305" class="grid"/>
+            <line x1="389" y1="50" x2="389" y2="305" class="grid"/>
+            <line x1="457" y1="50" x2="457" y2="305" class="grid"/>
+            <line x1="564" y1="50" x2="564" y2="305" class="grid"/>
+            <line x1="714" y1="50" x2="714" y2="305" class="grid"/>
+            <line x1="820" y1="50" x2="820" y2="305" class="grid"/>
+
+            <!-- Rows. y stride = 32. First row at y=58. -->
+            <!--
+                 Bar widths from x=200 (precomputed):
+                   value  log2     x_end   width
+                   16.00  4.000    820     620   FP16
+                    8.25  3.044    575     375   MXFP8
+                    8.00  3.000    564     364   FP8
+                    6.25  2.644    472     272   MXFP6
+                    4.80  2.263    374     174   GGUF
+                    4.50  2.170    350     150   NVFP4
+                    4.25  2.087    329     129   MXFP4
+                    4.13  2.046    319     119   INT4
+            -->
+
+            <!-- FP16/BF16 — 16.00 -->
+            <text x="20" y="78" class="rowL">FP16/BF16</text>
+            <rect x="200" y="64" width="620" height="20" class="bar3"/>
+            <text x="828" y="78" class="numL">16.00</text>
+
+            <!-- MXFP8 — 8.25 -->
+            <text x="20" y="110" class="rowL">MXFP8</text>
+            <rect x="200" y="96" width="375" height="20" class="bar2"/>
+            <text x="583" y="110" class="numL">8.25</text>
+
+            <!-- FP8 — 8.00 -->
+            <text x="20" y="142" class="rowL">FP8</text>
+            <rect x="200" y="128" width="364" height="20" class="bar2"/>
+            <text x="572" y="142" class="numL">8.00</text>
+
+            <!-- MXFP6 E2M3 — 6.25 -->
+            <text x="20" y="174" class="rowL">MXFP6 E2M3</text>
+            <rect x="200" y="160" width="272" height="20" class="bar2"/>
+            <text x="480" y="174" class="numL">6.25</text>
+
+            <!-- GGUF q4_K_M — 4.80 -->
+            <text x="20" y="206" class="rowL">GGUF q4_K_M</text>
+            <rect x="200" y="192" width="174" height="20" class="bar1"/>
+            <text x="382" y="206" class="numL">~4.80</text>
+
+            <!-- NVFP4 — 4.50 -->
+            <text x="20" y="238" class="rowL">NVFP4</text>
+            <rect x="200" y="224" width="150" height="20" class="bar1"/>
+            <text x="358" y="238" class="numL">4.50</text>
+
+            <!-- MXFP4 — 4.25 -->
+            <text x="20" y="270" class="rowL">MXFP4</text>
+            <rect x="200" y="256" width="129" height="20" class="bar1"/>
+            <text x="337" y="270" class="numL">4.25</text>
+
+            <!-- INT4 (g128) — 4.13 -->
+            <text x="20" y="302" class="rowL">INT4 (g128)</text>
+            <rect x="200" y="288" width="119" height="20" class="bar1"/>
+            <text x="327" y="302" class="numL">4.13</text>
+
+            <!-- Annotation: equal-width halvings below the plot -->
+            <!-- FP16 (x=820) → FP8 (x=564) — width 256 -->
+            <line x1="564" y1="320" x2="820" y2="320" class="step"/>
+            <line x1="564" y1="316" x2="564" y2="324" class="step"/>
+            <line x1="820" y1="316" x2="820" y2="324" class="step"/>
+            <text x="692" y="338" class="stepLbl">halving: FP16 &rarr; FP8 (256 px)</text>
+
+            <!-- FP8 (x=564) → FP4-region (x=307, the "4 bits" tick) — width 257 -->
+            <line x1="307" y1="320" x2="564" y2="320" class="step"/>
+            <line x1="307" y1="316" x2="307" y2="324" class="step"/>
+            <line x1="564" y1="316" x2="564" y2="324" class="step"/>
+            <text x="436" y="338" class="stepLbl">halving: FP8 &rarr; FP4 (257 px)</text>
+        </svg>
     </div>
-    <p style="font-size: 0.85rem;">Each <strong>halving</strong> of bits/param is ~25% of the bar width (FP16&rarr;FP8 = 100%&rarr;72.5%; FP8&rarr;FP4 = 72.5%&rarr;~46%). The four 4-bit formats span just 4.13&ndash;4.80 bits/param &mdash; a 16% absolute spread, all clustered near 45&ndash;51% on this log axis &mdash; but every fraction of a bit per parameter matters at 70B&ndash;671B scale (1.4&nbsp;GB per 0.16 bits/param at 70&nbsp;B). Ordering smallest to largest: INT4-g128 &lt; MXFP4 &lt; NVFP4 &lt; GGUF q4_K_M.</p>
+
+    <p style="font-size: 0.85rem;"><strong>Equal-width steps = equal multiplicative jumps.</strong> The two bracketed intervals at the bottom (FP16&rarr;FP8 and FP8&rarr;FP4) are the same length &mdash; that <em>is</em> the "halving bits/param" rule made visible. FP32 is omitted; it would extend off the right of the chart at 32&nbsp;bits/param. The four 4-bit formats are clustered between the "4" and "5" gridlines because they all live in the same bit-decade &mdash; but the spread (INT4 119 px &lt; MXFP4 129 &lt; NVFP4 150 &lt; GGUF 174) is large enough to read directly. Every fraction of a bit per parameter still matters at 70B&ndash;671B scale: ~1.4&nbsp;GB per 0.16 bits/param at 70&nbsp;B.</p>
 </section>
 
 <section class="slide" id="slide-12">
