@@ -612,7 +612,16 @@
 <section class="slide" id="slide-03">
     <div class="slide-number">03</div>
     <h2>The block-floating-point idea</h2>
-    <p>An ordinary FP number = sign + exponent + mantissa. A <strong>block-floating-point</strong> number = sign + mantissa, with the <em>exponent shared by every element in a block</em>. The encoder finds the largest absolute value in the block, picks a scale (the shared exponent), and divides everything by it; each element is then a small mantissa.</p>
+    <p>BFP is best understood as a <strong>hierarchical extension of classic floating point</strong>. An ordinary FP number is <code>sign + exponent + mantissa</code>, and is fully self-contained: every element pays for its own dynamic range (exponent) and its own precision (mantissa). BFP factors the exponent up one level &mdash; a <em>block</em> of elements share one scale, and each element carries only sign + mantissa relative to that shared scale. The encoder finds the block's largest absolute value, picks the smallest scale that lets every element fit on the per-element grid, divides everything by it, and rounds.</p>
+
+    <p>The depth of the hierarchy varies by format. Each new level handles a different scale of variation, and each is itself a small floating-point number:</p>
+    <ul>
+        <li><strong>Classic DSP BFP (1980s)</strong> &mdash; <em>one</em> level. Block exponent at the top, signed-integer mantissas underneath. No exponent on the element itself.</li>
+        <li><strong>MXFP4</strong> &mdash; <em>two</em> levels. A per-block E8M0 scale (8-bit shared exponent), then a per-element FP4 E2M1 which still carries 2 exponent bits and 1 mantissa bit of its own. So the block scale absorbs the bulk of the dynamic range and the tiny element FP gives a small extra range and a few discrete values inside the block.</li>
+        <li><strong>NVFP4</strong> &mdash; <em>three</em> levels. A per-tensor FP32 scale on top, a per-block FP8 (E4M3) scale in the middle, and a per-element FP4 underneath. The per-tensor scale tracks slow drift across the whole weight matrix during training, the per-block scale absorbs local outliers, and the per-element FP captures fine values inside the block.</li>
+    </ul>
+
+    <p>The diagram below makes the hierarchy concrete: each row is one level, increasing in granularity from the top (one number per tensor) to the bottom (one number per element). Decoding any element is just multiplying its way back up the stack.</p>
 
     <div class="canvas-wrap">
         <svg viewBox="-30 -10 940 320" xmlns="http://www.w3.org/2000/svg">
