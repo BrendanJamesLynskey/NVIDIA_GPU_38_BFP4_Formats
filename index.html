@@ -615,65 +615,58 @@
     <p>An ordinary FP number = sign + exponent + mantissa. A <strong>block-floating-point</strong> number = sign + mantissa, with the <em>exponent shared by every element in a block</em>. The encoder finds the largest absolute value in the block, picks a scale (the shared exponent), and divides everything by it; each element is then a small mantissa.</p>
 
     <div class="canvas-wrap">
-        <svg viewBox="-25 -10 905 260" xmlns="http://www.w3.org/2000/svg">
+        <svg viewBox="-30 -10 940 320" xmlns="http://www.w3.org/2000/svg">
             <style>
                 .lbl { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
                 .dim { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
                 .h   { fill: #76B900; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px; }
                 .scaleblk { fill: rgba(255,166,87,0.18); stroke: #ffa657; }
                 .mantblk  { fill: rgba(118,185,0,0.18);  stroke: #76B900; }
-                .arr { stroke: #76B900; fill: none; stroke-width: 1.6; }
             </style>
-            <text x="10" y="20" class="h">Per-tensor FP32 (top) &mdash; per-block float (middle) &mdash; per-element FP4 (bottom)</text>
+            <text x="20" y="22" class="h">Per-tensor FP32 (top) &mdash; per-block float (middle) &mdash; per-element FP4 (bottom)</text>
 
-            <text x="10" y="55" class="lbl">tensor-scale</text>
-            <rect x="120" y="40" width="80" height="22" class="scaleblk"/>
-            <text x="125" y="56" class="dim">FP32 (NVFP4)</text>
+            <!-- Row 1: tensor-scale -->
+            <text x="20" y="62" class="lbl">tensor-scale</text>
+            <rect x="200" y="48" width="120" height="26" class="scaleblk"/>
+            <text x="260" y="66" class="dim" text-anchor="middle">FP32</text>
+            <text x="200" y="93" class="dim">one per tensor &mdash; NVFP4 only (MXFP4 has none)</text>
 
-            <text x="10" y="100" class="lbl">block-scale</text>
+            <!-- Row 2: block-scales -->
+            <text x="20" y="130" class="lbl">block-scales</text>
             <g>
-                <rect x="120" y="85" width="40" height="22" class="scaleblk"/>
-                <rect x="170" y="85" width="40" height="22" class="scaleblk"/>
-                <rect x="220" y="85" width="40" height="22" class="scaleblk"/>
-                <rect x="270" y="85" width="40" height="22" class="scaleblk"/>
-                <rect x="320" y="85" width="40" height="22" class="scaleblk"/>
-                <rect x="370" y="85" width="40" height="22" class="scaleblk"/>
-                <rect x="420" y="85" width="40" height="22" class="scaleblk"/>
-                <rect x="470" y="85" width="40" height="22" class="scaleblk"/>
+                <rect x="200" y="116" width="48" height="26" class="scaleblk"/>
+                <rect x="252" y="116" width="48" height="26" class="scaleblk"/>
+                <rect x="304" y="116" width="48" height="26" class="scaleblk"/>
+                <rect x="356" y="116" width="48" height="26" class="scaleblk"/>
+                <rect x="408" y="116" width="48" height="26" class="scaleblk"/>
+                <rect x="460" y="116" width="48" height="26" class="scaleblk"/>
+                <rect x="512" y="116" width="48" height="26" class="scaleblk"/>
+                <rect x="564" y="116" width="48" height="26" class="scaleblk"/>
             </g>
-            <text x="125" y="101" class="dim">E4M3 / E8M0 &times; one per block</text>
+            <text x="224" y="134" class="dim" text-anchor="middle">FP8</text>
+            <text x="276" y="134" class="dim" text-anchor="middle">FP8</text>
+            <text x="328" y="134" class="dim" text-anchor="middle">FP8</text>
+            <text x="380" y="134" class="dim" text-anchor="middle">FP8</text>
+            <text x="432" y="134" class="dim" text-anchor="middle">FP8</text>
+            <text x="484" y="134" class="dim" text-anchor="middle">FP8</text>
+            <text x="536" y="134" class="dim" text-anchor="middle">FP8</text>
+            <text x="588" y="134" class="dim" text-anchor="middle">FP8</text>
+            <text x="200" y="161" class="dim">one per block &mdash; FP8 E4M3 (NVFP4) or E8M0 (MXFP4)</text>
 
-            <text x="10" y="160" class="lbl">elements</text>
-            <g>
-                <!-- 64 little FP4 cells in a strip, partitioned into 8 blocks of 8 (visual only) -->
-                <g transform="translate(120,140)">
-                    <!-- 8 blocks × 8 elements each -->
-                </g>
-            </g>
+            <!-- Row 3: elements -->
+            <text x="20" y="200" class="lbl">elements</text>
             <g class="mantblk">
-              <!-- generate 64 boxes via static -->
-              <!-- block 1 -->
-              <rect x="120" y="140" width="10" height="22"/>
-              <rect x="130" y="140" width="10" height="22"/>
-              <rect x="140" y="140" width="10" height="22"/>
-              <rect x="150" y="140" width="10" height="22"/>
-              <rect x="160" y="140" width="10" height="22"/>
-              <rect x="170" y="140" width="10" height="22"/>
-              <rect x="180" y="140" width="10" height="22"/>
-              <rect x="190" y="140" width="10" height="22"/>
-              <!-- block 2 -->
-              <rect x="200" y="140" width="10" height="22"/><rect x="210" y="140" width="10" height="22"/><rect x="220" y="140" width="10" height="22"/><rect x="230" y="140" width="10" height="22"/><rect x="240" y="140" width="10" height="22"/><rect x="250" y="140" width="10" height="22"/><rect x="260" y="140" width="10" height="22"/><rect x="270" y="140" width="10" height="22"/>
-              <!-- block 3 -->
-              <rect x="280" y="140" width="10" height="22"/><rect x="290" y="140" width="10" height="22"/><rect x="300" y="140" width="10" height="22"/><rect x="310" y="140" width="10" height="22"/><rect x="320" y="140" width="10" height="22"/><rect x="330" y="140" width="10" height="22"/><rect x="340" y="140" width="10" height="22"/><rect x="350" y="140" width="10" height="22"/>
-              <!-- block 4 -->
-              <rect x="360" y="140" width="10" height="22"/><rect x="370" y="140" width="10" height="22"/><rect x="380" y="140" width="10" height="22"/><rect x="390" y="140" width="10" height="22"/><rect x="400" y="140" width="10" height="22"/><rect x="410" y="140" width="10" height="22"/><rect x="420" y="140" width="10" height="22"/><rect x="430" y="140" width="10" height="22"/>
-              <rect x="440" y="140" width="10" height="22"/><rect x="450" y="140" width="10" height="22"/><rect x="460" y="140" width="10" height="22"/><rect x="470" y="140" width="10" height="22"/><rect x="480" y="140" width="10" height="22"/><rect x="490" y="140" width="10" height="22"/><rect x="500" y="140" width="10" height="22"/><rect x="510" y="140" width="10" height="22"/>
+              <rect x="200" y="186" width="11" height="26"/><rect x="212" y="186" width="11" height="26"/><rect x="224" y="186" width="11" height="26"/><rect x="236" y="186" width="11" height="26"/><rect x="248" y="186" width="11" height="26"/><rect x="260" y="186" width="11" height="26"/><rect x="272" y="186" width="11" height="26"/><rect x="284" y="186" width="11" height="26"/>
+              <rect x="296" y="186" width="11" height="26"/><rect x="308" y="186" width="11" height="26"/><rect x="320" y="186" width="11" height="26"/><rect x="332" y="186" width="11" height="26"/><rect x="344" y="186" width="11" height="26"/><rect x="356" y="186" width="11" height="26"/><rect x="368" y="186" width="11" height="26"/><rect x="380" y="186" width="11" height="26"/>
+              <rect x="392" y="186" width="11" height="26"/><rect x="404" y="186" width="11" height="26"/><rect x="416" y="186" width="11" height="26"/><rect x="428" y="186" width="11" height="26"/><rect x="440" y="186" width="11" height="26"/><rect x="452" y="186" width="11" height="26"/><rect x="464" y="186" width="11" height="26"/><rect x="476" y="186" width="11" height="26"/>
+              <rect x="488" y="186" width="11" height="26"/><rect x="500" y="186" width="11" height="26"/><rect x="512" y="186" width="11" height="26"/><rect x="524" y="186" width="11" height="26"/><rect x="536" y="186" width="11" height="26"/><rect x="548" y="186" width="11" height="26"/><rect x="560" y="186" width="11" height="26"/><rect x="572" y="186" width="11" height="26"/>
+              <rect x="584" y="186" width="11" height="26"/><rect x="596" y="186" width="11" height="26"/><rect x="608" y="186" width="11" height="26"/><rect x="620" y="186" width="11" height="26"/><rect x="632" y="186" width="11" height="26"/><rect x="644" y="186" width="11" height="26"/><rect x="656" y="186" width="11" height="26"/><rect x="668" y="186" width="11" height="26"/>
             </g>
-            <text x="125" y="178" class="dim">FP4 E2M1 &mdash; 4 bits each</text>
+            <text x="200" y="231" class="dim">one per element &mdash; FP4 E2M1 (4 bits each)</text>
 
-            <!-- decoded value formula -->
-            <text x="10" y="215" class="h">value = tensor_scale &times; block_scale &times; mantissa</text>
-            <text x="10" y="230" class="dim">(NVFP4 has both scales; MXFP4 has only block_scale; legacy DSP BFP has only block_scale and integer mantissa)</text>
+            <!-- Bottom formula -->
+            <text x="20" y="275" class="h">value = tensor_scale &times; block_scale &times; mantissa</text>
+            <text x="20" y="297" class="dim">NVFP4 uses all three; MXFP4 drops tensor_scale; legacy DSP BFP keeps only block_scale with integer mantissas</text>
         </svg>
     </div>
 
