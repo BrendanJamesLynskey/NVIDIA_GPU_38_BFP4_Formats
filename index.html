@@ -534,7 +534,7 @@
 
     <div class="diagram-grid cols-3">
         <div class="diagram-panel accent-border"><h4>Memory</h4><p>FP16 70&nbsp;B = 140&nbsp;GB. NVFP4 70&nbsp;B = 39&nbsp;GB. The model now fits in a single 48&nbsp;GB card with KV-cache headroom.</p></div>
-        <div class="diagram-panel accent-border"><h4>Compute</h4><p>Blackwell 5th-gen tensor cores deliver <strong>2&times; FP8</strong> at FP4. B200 reaches ~9&nbsp;PFLOPS sparse FP4 / ~4.5&nbsp;PFLOPS dense.</p></div>
+        <div class="diagram-panel accent-border"><h4>Compute</h4><p>Blackwell 5th-gen tensor cores deliver <strong>2&times; FP8</strong> at FP4. B200 reaches ~9&nbsp;PFLOPS dense FP4 / ~18&nbsp;PFLOPS sparse.</p></div>
         <div class="diagram-panel accent-border"><h4>Quality</h4><p>Naive 4-bit destroys quality. Block-scaling restores it: NVFP4 gets within ~0.1&nbsp;perplexity of FP8 on Llama-3 70&nbsp;B.</p></div>
     </div>
 
@@ -693,7 +693,7 @@
 <section class="slide" id="slide-04">
     <div class="slide-number">04</div>
     <h2>FP4 E2M1 &mdash; the element</h2>
-    <p>Both MXFP4 and NVFP4 elements are <strong>OCP FP4</strong>: 1 sign bit, 2 exponent bits (bias&nbsp;1), 1 mantissa bit, and a "no Inf, no NaN, no rounding modes" simplification. The 4 bits encode 16 codes that map to 14 distinct values &mdash; four of those codes (<code>0000</code>, <code>1000</code>, <code>0001</code>, <code>1001</code>) are <strong>subnormals</strong>.</p>
+    <p>Both MXFP4 and NVFP4 elements are <strong>OCP FP4</strong>: 1 sign bit, 2 exponent bits (bias&nbsp;1), 1 mantissa bit, and a "no Inf, no NaN, no rounding modes" simplification. The 4 bits encode 16 codes that map to 15 distinct values (&plusmn;0 collapse to one) &mdash; four of those codes (<code>0000</code>, <code>1000</code>, <code>0001</code>, <code>1001</code>) are <strong>subnormals</strong>.</p>
 
     <p>A <em>normal</em> IEEE-style float carries an implicit leading 1 in the mantissa, so the value is <code>(&minus;1)<sup>s</sup> &times; 2<sup>exp&minus;bias</sup> &times; 1.m</code>. A <em>subnormal</em> drops that implicit leading 1 when the exponent field is all zeros and replaces the formula with <code>(&minus;1)<sup>s</sup> &times; 2<sup>1&minus;bias</sup> &times; 0.m</code>. For E2M1 (bias&nbsp;1) this means codes <code>x000</code> represent &plusmn;0 (mantissa 0) and codes <code>x001</code> represent &plusmn;0.5 (mantissa 1). Without subnormals the smallest positive value would jump straight from 0 to 1.0, leaving a "dead zone" around zero where small activations would round to either 0 or 1. Subnormals fill that gap and make the lattice continuous through zero &mdash; the linear-spaced ramp on either side of zero you see below.</p>
 
@@ -998,7 +998,7 @@
                 <tr><td>Per-tensor scale</td><td>None (one level only)</td><td>FP32 (managed by TE v2)</td></tr>
                 <tr><td>Effective bits/element</td><td>4.25</td><td>~4.5</td></tr>
                 <tr><td>Tensor-core support</td><td>Blackwell 5th-gen MMA</td><td>Blackwell 5th-gen MMA</td></tr>
-                <tr><td>PFLOPS on B200 (sparse)</td><td>~9 PFLOPS</td><td>~9 PFLOPS</td></tr>
+                <tr><td>PFLOPS on B200 (dense / sparse)</td><td>~9 / ~18 PFLOPS</td><td>~9 / ~18 PFLOPS</td></tr>
                 <tr><td>Quality vs FP8 (Llama-3 70B)</td><td>~0.3&ndash;0.6 PPL gap</td><td>~0.05&ndash;0.15 PPL gap</td></tr>
                 <tr><td>Best fit</td><td>Cross-vendor inference, smallest footprint</td><td>Training and quality-critical inference on NVIDIA</td></tr>
             </tbody>
@@ -1044,7 +1044,7 @@
         <div class="diagram-panel accent-border">
             <h4>5th-gen tensor cores</h4>
             <p>The MMA pipeline gains an FP4 / FP6 / NVFP4 datapath. The dot-product unit performs <code>4-bit &times; 4-bit &rarr; FP32 partial product</code> with the block scales applied at accumulation. Sparsity (2:4) doubles peak again for FP4.</p>
-            <p style="margin-top:0.5rem;">PTX/SASS exposes new MMA shapes via WGMMA: <code>m64nNk32</code> with <code>.kind::mxf4</code>, <code>.kind::nvf4</code>, <code>.kind::mxf6</code>.</p>
+            <p style="margin-top:0.5rem;">PTX/SASS exposes new MMA shapes via Blackwell's <code>tcgen05.mma</code> family (the 5th-gen tensor-core MMA op, replacing Hopper's <code>wgmma</code>) with <code>.kind::mxf4</code>, <code>.kind::nvf4</code>, <code>.kind::mxf6</code>.</p>
         </div>
         <div class="diagram-panel accent-border">
             <h4>Transformer Engine v2</h4>
@@ -1360,7 +1360,7 @@ recipe = DelayedScaling(fp8_format=Format.<span class="type">NVFP4</span>,
         </div>
         <div class="diagram-panel accent-border">
             <h4>Compute headroom</h4>
-            <p>9&nbsp;PFLOPS sparse FP4 on B200 means a 70&nbsp;B model's prefill is essentially free even at long context. The bottleneck is back to <em>activation</em> bandwidth and KV access, not weight loading.</p>
+            <p>9&nbsp;PFLOPS dense (18&nbsp;PFLOPS sparse) FP4 on B200 means a 70&nbsp;B model's prefill is essentially free even at long context. The bottleneck is back to <em>activation</em> bandwidth and KV access, not weight loading.</p>
         </div>
     </div>
 
