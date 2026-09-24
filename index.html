@@ -9,15 +9,15 @@
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-primary: #0a0a0a;
-            --bg-card: #0d1117;
-            --bg-code: #161b22;
-            --text-primary: #e6edf3;
-            --text-secondary: #8b949e;
-            --accent: #76B900;
-            --accent-dim: #76B90044;
-            --accent-glow: #76B90033;
-            --border: #21262d;
+            --bg-primary: #1b1b1a;
+            --bg-card: #212120;
+            --bg-code: #292928;
+            --text-primary: #edede7;
+            --text-secondary: #9b9b95;
+            --accent: #b8b315;
+            --accent-dim: #b8b31544;
+            --accent-glow: #b8b31533;
+            --border: #363633;
             --font-display: 'Space Grotesk', sans-serif;
             --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
             --font-body: 'Inter', sans-serif;
@@ -174,7 +174,7 @@
             font-family: var(--font-mono);
             font-size: 0.75rem;
             color: var(--accent);
-            background: rgba(118, 185, 0, 0.08);
+            background: rgba(184,179,21,0.08);
             padding: 0.4rem 1rem;
             border-bottom: 1px solid var(--border);
         }
@@ -183,14 +183,14 @@
             font-family: var(--font-mono);
             font-size: 0.85rem;
             line-height: 1.6;
-            color: #c9d1d9;
+            color: #d5d5cf;
         }
-        .kw { color: #ff7b72; }
-        .fn { color: #d2a8ff; }
-        .str { color: #a5d6ff; }
-        .cm { color: #8b949e; font-style: italic; }
-        .num { color: #79c0ff; }
-        .type { color: #ffa657; }
+        .kw { color: #e57d63; }
+        .fn { color: #d1c2e1; }
+        .str { color: #c9dbe2; }
+        .cm { color: #9b9b95; font-style: italic; }
+        .num { color: #afcbd8; }
+        .type { color: #e0b172; }
 
         /* ── Tables ── */
         .table-wrap {
@@ -212,7 +212,7 @@
         }
         td { padding: 0.6rem 1rem; border-bottom: 1px solid var(--border); color: var(--text-secondary); }
         tr:last-child td { border-bottom: none; }
-        tr:nth-child(even) td { background: rgba(13, 17, 23, 0.5); }
+        tr:nth-child(even) td { background: rgba(33,33,32,0.5); }
 
         /* ── Diagram panels ── */
         .diagram-grid {
@@ -349,7 +349,7 @@
             cursor: pointer;
             transition: background 0.15s ease;
         }
-        .btn:hover { background: rgba(118, 185, 0, 0.2); }
+        .btn:hover { background: rgba(184,179,21,0.2); }
         .result-box {
             background: var(--bg-code);
             border: 1px solid var(--border);
@@ -392,8 +392,8 @@
             margin-left: 0.3rem;
         }
         .badge.ok    { border-color: var(--accent); color: var(--accent); background: var(--accent-dim); }
-        .badge.warn  { border-color: #ffa657; color: #ffa657; background: rgba(255,166,87,0.08); }
-        .badge.bad   { border-color: #ff7b72; color: #ff7b72; background: rgba(255,123,114,0.08); }
+        .badge.warn  { border-color: #e0b172; color: #e0b172; background: rgba(224,177,114,0.08); }
+        .badge.bad   { border-color: #e57d63; color: #e57d63; background: rgba(229,125,99,0.08); }
 
         /* ── Timeline ── */
         .timeline {
@@ -459,8 +459,8 @@
             background: linear-gradient(90deg, var(--accent-dim), var(--accent));
             border-right: 2px solid var(--accent);
         }
-        .bar-row .barfill.warn { background: linear-gradient(90deg, rgba(255,166,87,0.2), #ffa657); border-right-color: #ffa657; }
-        .bar-row .barfill.bad  { background: linear-gradient(90deg, rgba(255,123,114,0.2), #ff7b72); border-right-color: #ff7b72; }
+        .bar-row .barfill.warn { background: linear-gradient(90deg, rgba(224,177,114,0.2), #e0b172); border-right-color: #e0b172; }
+        .bar-row .barfill.bad  { background: linear-gradient(90deg, rgba(229,125,99,0.2), #e57d63); border-right-color: #e57d63; }
         .bar-row .num   { color: var(--text-primary); text-align: left; }
 
         /* ── Responsive ── */
@@ -629,11 +629,11 @@
     <div class="canvas-wrap">
         <svg viewBox="-30 -10 940 320" xmlns="http://www.w3.org/2000/svg">
             <style>
-                .lbl { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-                .dim { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
-                .h   { fill: #76B900; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px; }
-                .scaleblk { fill: rgba(255,166,87,0.18); stroke: #ffa657; }
-                .mantblk  { fill: rgba(118,185,0,0.18);  stroke: #76B900; }
+                .lbl { fill: #edede7; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+                .dim { fill: #9b9b95; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+                .h   { fill: #b8b315; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 14px; }
+                .scaleblk { fill: rgba(224,177,114,0.18); stroke: #e0b172; }
+                .mantblk  { fill: rgba(184,179,21,0.18);  stroke: #b8b315; }
             </style>
             <text x="20" y="22" class="h">Per-tensor FP32 (top) &mdash; per-block float (middle) &mdash; per-element FP4 (bottom)</text>
 
@@ -700,19 +700,19 @@
     <div class="canvas-wrap">
         <svg viewBox="-25 -10 905 280" xmlns="http://www.w3.org/2000/svg">
             <style>
-                .s { fill: #ff7b72; }
-                .e { fill: #ffa657; }
-                .m { fill: #76B900; }
-                .lbl  { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-                .dim  { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
-                .val  { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-anchor: middle; }
-                .pat  { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; }
-                .h    { fill: #76B900; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
-                .bitname { fill: #0a0a0a; font-family: 'JetBrains Mono', monospace; font-size: 13px; text-anchor: middle; font-weight: 700; }
-                .axis { stroke: #21262d; }
-                .tick { stroke: #21262d; stroke-dasharray: 2,3; }
-                .pt   { fill: #76B900; }
-                .subnormal { fill: rgba(118,185,0,0.10); stroke: #76B900; stroke-dasharray: 3,3; }
+                .s { fill: #e57d63; }
+                .e { fill: #e0b172; }
+                .m { fill: #b8b315; }
+                .lbl  { fill: #edede7; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+                .dim  { fill: #9b9b95; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+                .val  { fill: #edede7; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-anchor: middle; }
+                .pat  { fill: #9b9b95; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; }
+                .h    { fill: #b8b315; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
+                .bitname { fill: #1b1b1a; font-family: 'JetBrains Mono', monospace; font-size: 13px; text-anchor: middle; font-weight: 700; }
+                .axis { stroke: #363633; }
+                .tick { stroke: #363633; stroke-dasharray: 2,3; }
+                .pt   { fill: #b8b315; }
+                .subnormal { fill: rgba(184,179,21,0.10); stroke: #b8b315; stroke-dasharray: 3,3; }
             </style>
             <text x="20" y="22" class="h">FP4 E2M1 bit layout (top) &mdash; full 16-code lattice with bit codes (bottom)</text>
 
@@ -774,7 +774,7 @@
             </g>
 
             <!-- Subnormal annotation -->
-            <text x="440" y="222" class="dim" text-anchor="middle">subnormal range (exp&nbsp;=&nbsp;00): codes&nbsp;<tspan fill="#e6edf3">x000</tspan>&nbsp;=&nbsp;&plusmn;0,&nbsp;<tspan fill="#e6edf3">x001</tspan>&nbsp;=&nbsp;&plusmn;0.5</text>
+            <text x="440" y="222" class="dim" text-anchor="middle">subnormal range (exp&nbsp;=&nbsp;00): codes&nbsp;<tspan fill="#edede7">x000</tspan>&nbsp;=&nbsp;&plusmn;0,&nbsp;<tspan fill="#edede7">x001</tspan>&nbsp;=&nbsp;&plusmn;0.5</text>
 
             <!-- Half labels -->
             <text x="200" y="252" class="dim" text-anchor="middle">negative half &mdash; sign bit = 1</text>
@@ -793,11 +793,11 @@
     <div class="canvas-wrap">
         <svg viewBox="-30 -10 940 260" xmlns="http://www.w3.org/2000/svg">
             <style>
-                .e8 { fill: rgba(255,166,87,0.25); stroke: #ffa657; }
-                .fp4 { fill: rgba(118,185,0,0.18); stroke: #76B900; }
-                .lbl { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-                .dim { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
-                .h   { fill: #76B900; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
+                .e8 { fill: rgba(224,177,114,0.25); stroke: #e0b172; }
+                .fp4 { fill: rgba(184,179,21,0.18); stroke: #b8b315; }
+                .lbl { fill: #edede7; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+                .dim { fill: #9b9b95; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+                .h   { fill: #b8b315; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
             </style>
             <text x="20" y="22" class="h">One MX block = 1 byte scale + 32 &times; 4-bit elements = 17 bytes total</text>
 
@@ -889,12 +889,12 @@
     <div class="canvas-wrap">
         <svg viewBox="-25 -10 905 240" xmlns="http://www.w3.org/2000/svg">
             <style>
-                .ts { fill: rgba(165,214,255,0.18); stroke: #a5d6ff; }
-                .bs { fill: rgba(255,166,87,0.22);  stroke: #ffa657; }
-                .fp4{ fill: rgba(118,185,0,0.18);   stroke: #76B900; }
-                .lbl { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-                .dim { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
-                .h   { fill: #76B900; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
+                .ts { fill: rgba(201,219,226,0.18); stroke: #c9dbe2; }
+                .bs { fill: rgba(224,177,114,0.22);  stroke: #e0b172; }
+                .fp4{ fill: rgba(184,179,21,0.18);   stroke: #b8b315; }
+                .lbl { fill: #edede7; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+                .dim { fill: #9b9b95; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+                .h   { fill: #b8b315; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
             </style>
             <text x="10" y="20" class="h">NVFP4 = FP32 tensor scale + FP8 per-16 block scale + FP4 mantissa</text>
 
@@ -968,8 +968,8 @@
         <p>Both formats are produced by NVIDIA's <strong>Model Optimizer</strong> (and TensorRT-LLM); the export step converts an FP16/BF16 checkpoint into either MXFP4 or NVFP4 with calibration data. Pick NVFP4 for training and quality-critical inference (long-context reasoning, code, math); pick MXFP4 for general-purpose inference and the smallest possible weight footprint.</p>
     </div>
 
-    <div class="callout" style="border-left-color: #ffa657;">
-        <div class="callout-label" style="color: #ffa657;">Open vs proprietary</div>
+    <div class="callout" style="border-left-color: #e0b172;">
+        <div class="callout-label" style="color: #e0b172;">Open vs proprietary</div>
         <p><strong>MXFP4</strong> is part of the OCP Microscaling specification (v1.0, Sept&nbsp;2023) &mdash; an open, royalty-free standard published by the Open Compute Project and contributed by AMD, Arm, Intel, Meta, Microsoft, NVIDIA and Qualcomm. Any silicon vendor can implement it. It already appears on NVIDIA Blackwell, and OCP MX support is on the public roadmap of competing accelerators (AMD CDNA&nbsp;4, Intel Gaudi&nbsp;successors, Meta MTIA, AWS Trainium2/3).</p>
         <p style="margin-top: 0.5rem;"><strong>NVFP4</strong> is <strong>NVIDIA-proprietary</strong>. There is no public specification document, no OCP submission, and no independent implementation: the format is documented only in NVIDIA's Transformer Engine and Model Optimizer release notes, and the only hardware that decodes it is NVIDIA Blackwell. Other vendors are free to design <em>similar</em> two-level-scaled FP4 schemes (the underlying idea &mdash; block FP plus per-tensor scaling &mdash; is decades old and not novel by itself), but the specific NVFP4 encoding, the "NVFP4" name, and the TE&nbsp;v2 scale-management workflow are NVIDIA's. If you want a portable 4-bit format that runs across vendors, MXFP4 is the only choice today.</p>
     </div>
@@ -1009,14 +1009,14 @@
     <div class="canvas-wrap">
         <svg viewBox="-25 -10 905 220" xmlns="http://www.w3.org/2000/svg">
             <style>
-                .axis { stroke: #21262d; }
-                .lbl  { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-                .val  { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; }
-                .h    { fill: #e6edf3; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
-                .barA { fill: rgba(118,185,0,0.30); stroke: #76B900; }
-                .barB { fill: rgba(255,166,87,0.30); stroke: #ffa657; }
-                .barC { fill: rgba(255,123,114,0.30); stroke: #ff7b72; }
-                .barD { fill: rgba(165,214,255,0.30); stroke: #a5d6ff; }
+                .axis { stroke: #363633; }
+                .lbl  { fill: #9b9b95; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+                .val  { fill: #edede7; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; }
+                .h    { fill: #edede7; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
+                .barA { fill: rgba(184,179,21,0.30); stroke: #b8b315; }
+                .barB { fill: rgba(224,177,114,0.30); stroke: #e0b172; }
+                .barC { fill: rgba(229,125,99,0.30); stroke: #e57d63; }
+                .barD { fill: rgba(201,219,226,0.30); stroke: #c9dbe2; }
             </style>
             <text x="10" y="18" class="h">70&nbsp;B params (GB)</text>
             <line x1="170" y1="30" x2="170" y2="180" class="axis"/>
@@ -1055,16 +1055,16 @@
     <div class="canvas-wrap">
         <svg viewBox="-25 -10 905 260" xmlns="http://www.w3.org/2000/svg">
             <style>
-                .box   { fill: #161b22; stroke: #21262d; }
-                .box.a { stroke: #76B900; }
-                .lbl   { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-anchor: middle; }
-                .sub   { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; }
-                .arr   { stroke: #76B900; fill: none; stroke-width: 1.6; marker-end: url(#ah); }
-                .h     { fill: #76B900; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
+                .box   { fill: #292928; stroke: #363633; }
+                .box.a { stroke: #b8b315; }
+                .lbl   { fill: #edede7; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-anchor: middle; }
+                .sub   { fill: #9b9b95; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; }
+                .arr   { stroke: #b8b315; fill: none; stroke-width: 1.6; marker-end: url(#ah); }
+                .h     { fill: #b8b315; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
             </style>
             <defs>
                 <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
-                    <path d="M0,0 L10,5 L0,10 z" fill="#76B900"/>
+                    <path d="M0,0 L10,5 L0,10 z" fill="#b8b315"/>
                 </marker>
             </defs>
             <text x="10" y="20" class="h">Cast &rarr; MMA &rarr; Accumulate (Blackwell, NVFP4 path)</text>
@@ -1137,16 +1137,16 @@ recipe = DelayedScaling(fp8_format=Format.<span class="type">NVFP4</span>,
     <div class="canvas-wrap">
         <svg viewBox="-30 -10 940 460" xmlns="http://www.w3.org/2000/svg">
             <style>
-                .axisL { stroke: #21262d; stroke-width: 1; }
-                .grid  { stroke: #21262d; stroke-dasharray: 2,3; }
-                .tickL { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; }
-                .rowL  { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-                .numL  { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; }
-                .bar1  { fill: #76B900; stroke: #76B900; stroke-width: 1; }
-                .bar2  { fill: #ffa657; stroke: #ffa657; stroke-width: 1; }
-                .bar3  { fill: #ff7b72; stroke: #ff7b72; stroke-width: 1; }
-                .step  { stroke: rgba(118,185,0,0.35); stroke-width: 1; stroke-dasharray: 4,3; }
-                .stepLbl { fill: #76B900; font-family: 'JetBrains Mono', monospace; font-size: 9px; text-anchor: middle; }
+                .axisL { stroke: #363633; stroke-width: 1; }
+                .grid  { stroke: #363633; stroke-dasharray: 2,3; }
+                .tickL { fill: #9b9b95; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; }
+                .rowL  { fill: #edede7; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+                .numL  { fill: #edede7; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; }
+                .bar1  { fill: #b8b315; stroke: #b8b315; stroke-width: 1; }
+                .bar2  { fill: #e0b172; stroke: #e0b172; stroke-width: 1; }
+                .bar3  { fill: #e57d63; stroke: #e57d63; stroke-width: 1; }
+                .step  { stroke: rgba(184,179,21,0.35); stroke-width: 1; stroke-dasharray: 4,3; }
+                .stepLbl { fill: #b8b315; font-family: 'JetBrains Mono', monospace; font-size: 9px; text-anchor: middle; }
             </style>
 
             <!-- Plot area: x = 200..820 (620 wide), y = 50..420.
@@ -1165,7 +1165,7 @@ recipe = DelayedScaling(fp8_format=Format.<span class="type">NVFP4</span>,
 
             <!-- X axis -->
             <line x1="200" y1="40" x2="820" y2="40" class="axisL"/>
-            <text x="510" y="22" class="tickL" font-size="11" fill="#76B900" font-weight="600">peak dense TFLOPs &mdash; log&#8322; (each doubling = same step)</text>
+            <text x="510" y="22" class="tickL" font-size="11" fill="#b8b315" font-weight="600">peak dense TFLOPs &mdash; log&#8322; (each doubling = same step)</text>
 
             <!-- Tick marks -->
             <g>
@@ -1287,15 +1287,15 @@ recipe = DelayedScaling(fp8_format=Format.<span class="type">NVFP4</span>,
     <div class="canvas-wrap">
         <svg viewBox="-25 -10 905 340" xmlns="http://www.w3.org/2000/svg">
             <style>
-                .axis { stroke: #21262d; }
-                .grid { stroke: #21262d; stroke-dasharray: 2,3; }
-                .lbl  { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
-                .val  { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; }
-                .h    { fill: #e6edf3; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
-                .b1   { fill: rgba(118,185,0,0.35); stroke: #76B900; }
-                .b2   { fill: rgba(255,166,87,0.35); stroke: #ffa657; }
-                .b3   { fill: rgba(255,123,114,0.35); stroke: #ff7b72; }
-                .b4   { fill: rgba(165,214,255,0.35); stroke: #a5d6ff; }
+                .axis { stroke: #363633; }
+                .grid { stroke: #363633; stroke-dasharray: 2,3; }
+                .lbl  { fill: #9b9b95; font-family: 'JetBrains Mono', monospace; font-size: 11px; }
+                .val  { fill: #edede7; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; }
+                .h    { fill: #edede7; font-family: 'Space Grotesk', sans-serif; font-weight: 600; font-size: 13px; }
+                .b1   { fill: rgba(184,179,21,0.35); stroke: #b8b315; }
+                .b2   { fill: rgba(224,177,114,0.35); stroke: #e0b172; }
+                .b3   { fill: rgba(229,125,99,0.35); stroke: #e57d63; }
+                .b4   { fill: rgba(201,219,226,0.35); stroke: #c9dbe2; }
             </style>
             <text x="10" y="18" class="h">Perplexity (left) &mdash; lower is better &mdash; bytes/param (right)</text>
 
@@ -1375,16 +1375,16 @@ recipe = DelayedScaling(fp8_format=Format.<span class="type">NVFP4</span>,
     <div class="canvas-wrap">
         <svg viewBox="-30 -10 940 360" xmlns="http://www.w3.org/2000/svg">
             <style>
-                .axisL { stroke: #21262d; stroke-width: 1; }
-                .grid  { stroke: #21262d; stroke-dasharray: 2,3; }
-                .tickL { fill: #8b949e; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; }
-                .rowL  { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
-                .numL  { fill: #e6edf3; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; }
-                .bar1  { fill: #76B900; stroke: #76B900; stroke-width: 1; }
-                .bar2  { fill: #ffa657; stroke: #ffa657; stroke-width: 1; }
-                .bar3  { fill: #ff7b72; stroke: #ff7b72; stroke-width: 1; }
-                .step  { stroke: rgba(118,185,0,0.6); stroke-width: 1.5; }
-                .stepLbl { fill: #76B900; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; font-weight: 600; }
+                .axisL { stroke: #363633; stroke-width: 1; }
+                .grid  { stroke: #363633; stroke-dasharray: 2,3; }
+                .tickL { fill: #9b9b95; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; }
+                .rowL  { fill: #edede7; font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+                .numL  { fill: #edede7; font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; }
+                .bar1  { fill: #b8b315; stroke: #b8b315; stroke-width: 1; }
+                .bar2  { fill: #e0b172; stroke: #e0b172; stroke-width: 1; }
+                .bar3  { fill: #e57d63; stroke: #e57d63; stroke-width: 1; }
+                .step  { stroke: rgba(184,179,21,0.6); stroke-width: 1.5; }
+                .stepLbl { fill: #b8b315; font-family: 'JetBrains Mono', monospace; font-size: 10px; text-anchor: middle; font-weight: 600; }
             </style>
 
             <!-- X axis: log2(bits) from log2(3)=1.585 to log2(16)=4. Range=2.415.
@@ -1394,7 +1394,7 @@ recipe = DelayedScaling(fp8_format=Format.<span class="type">NVFP4</span>,
             -->
 
             <!-- Title above axis -->
-            <text x="510" y="22" class="tickL" font-size="11" fill="#76B900" font-weight="600">effective bits/param &mdash; log&#8322; (each halving = same step)</text>
+            <text x="510" y="22" class="tickL" font-size="11" fill="#b8b315" font-weight="600">effective bits/param &mdash; log&#8322; (each halving = same step)</text>
 
             <!-- X axis line and ticks -->
             <line x1="200" y1="40" x2="820" y2="40" class="axisL"/>
