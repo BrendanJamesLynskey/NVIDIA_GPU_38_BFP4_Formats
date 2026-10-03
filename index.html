@@ -958,7 +958,7 @@
     <h3>What that buys you</h3>
     <ul>
         <li><strong>Smaller block (16 vs 32)</strong> means an outlier in one head dim only contaminates 16 elements, not 32. NVIDIA's NVFP4 whitepaper [<a href="#refs">1</a>] shows attention with 16-element blocks recovers accuracy that MXFP4 (32) loses on long-context reasoning models.</li>
-        <li><strong>FP8 block scale</strong> gives ~22 distinct scale values between any two powers of two. The block can pack mantissas tighter against the FP4 grid, reducing rounding error per element.</li>
+        <li><strong>FP8 block scale</strong> gives 8 distinct scale values per power-of-two interval (3 mantissa bits), where E8M0 gives one. The block can pack mantissas tighter against the FP4 grid, reducing rounding error per element.</li>
         <li><strong>Per-tensor FP32 macro-scale</strong> lets the Transformer Engine v2 do the same dynamic re-scaling trick as on Hopper FP8 &mdash; you don't lose dynamic range to weight-update drift during training.</li>
         <li><strong>Cost:</strong> ~4.5 bits/element vs MXFP4's 4.25, so 5&ndash;6% larger weight files. Same tensor-core throughput.</li>
     </ul>
@@ -1044,7 +1044,7 @@
         <div class="diagram-panel accent-border">
             <h4>5th-gen tensor cores</h4>
             <p>The MMA pipeline gains an FP4 / FP6 / NVFP4 datapath. The dot-product unit performs <code>4-bit &times; 4-bit &rarr; FP32 partial product</code> with the block scales applied at accumulation. Sparsity (2:4) doubles peak again for FP4.</p>
-            <p style="margin-top:0.5rem;">PTX/SASS exposes new MMA shapes via Blackwell's <code>tcgen05.mma</code> family (the 5th-gen tensor-core MMA op, replacing Hopper's <code>wgmma</code>) with <code>.kind::mxf4</code>, <code>.kind::nvf4</code>, <code>.kind::mxf6</code>.</p>
+            <p style="margin-top:0.5rem;">PTX/SASS exposes new MMA shapes via Blackwell's <code>tcgen05.mma</code> family (the 5th-gen tensor-core MMA op, replacing Hopper's <code>wgmma</code>) with <code>.kind::mxf4</code>, <code>.kind::mxf4nvf4</code> (NVFP4 and MXFP4) and <code>.kind::mxf8f6f4</code> (MXFP8/FP6/FP4).</p>
         </div>
         <div class="diagram-panel accent-border">
             <h4>Transformer Engine v2</h4>
@@ -1251,10 +1251,10 @@ recipe = DelayedScaling(fp8_format=Format.<span class="type">NVFP4</span>,
             <rect x="200" y="352" width="584" height="20" class="bar3"/>
             <text x="791" y="366" class="numL">9,000 TF</text>
 
-            <!-- GB10 (Spark) FP4 — 1000 TF -->
+            <!-- GB10 (Spark) FP4 — ~500 TF dense (1 PF is the sparse figure) -->
             <text x="20" y="398" class="rowL">GB10 (Spark) FP4</text>
-            <rect x="200" y="384" width="281" height="20" class="bar1"/>
-            <text x="488" y="398" class="numL">~1,000 TF</text>
+            <rect x="200" y="384" width="186" height="20" class="bar1"/>
+            <text x="393" y="398" class="numL">~500 TF</text>
 
             <!-- Annotation arrows showing the doubling steps are equal -->
             <line x1="480" y1="172" x2="480" y2="206" class="step"/>
@@ -1271,7 +1271,7 @@ recipe = DelayedScaling(fp8_format=Format.<span class="type">NVFP4</span>,
         </svg>
     </div>
 
-    <p style="font-size: 0.85rem;"><strong>Equal-width steps in this chart = equal multiplicative jumps in throughput.</strong> Note that the H100 FP16&rarr;FP8 jump (~95 viewBox units), the B200 FP16&rarr;FP8 jump (also ~95), and the B200 FP8&rarr;FP4 jump (also ~95) are all visibly the same size &mdash; that <em>is</em> the "halving bits per element doubles peak math" rule made visible. Sparse (2:4) tensor cores would add a fourth identical step on Blackwell. INT4 / INT8 tensor-core support continued from Turing/Ampere into Hopper but is no longer a quality-leading choice for LLMs &mdash; FP4-with-block-scaling is. Bar colours: green = FP16/INT8 tier, orange = FP8 tier, red = FP4 tier.</p>
+    <p style="font-size: 0.85rem;"><strong>Equal-width steps in this chart = equal multiplicative jumps in throughput.</strong> Note that the H100 FP16&rarr;FP8 jump (~95 viewBox units), the B200 FP16&rarr;FP8 jump (also ~95), and the B200 FP8&rarr;FP4 jump (also ~95) are all visibly the same size &mdash; that <em>is</em> the "halving bits per element doubles peak math" rule made visible. Sparse (2:4) tensor cores would add a fourth identical step on Blackwell. INT8 tensor-core support continued from Turing/Ampere into Hopper (INT4 was dropped after Ampere) but is no longer a quality-leading choice for LLMs &mdash; FP4-with-block-scaling is. Bar colours: green = FP16/INT8 tier, orange = FP8 tier, red = FP4 tier.</p>
 
     <div class="callout">
         <div class="callout-label">Read carefully</div>
@@ -1352,7 +1352,7 @@ recipe = DelayedScaling(fp8_format=Format.<span class="type">NVFP4</span>,
         </div>
         <div class="diagram-panel accent-border">
             <h4>Concurrency</h4>
-            <p>NVFP4 frees ~100&nbsp;GB of HBM on a single B200, which is ~2&nbsp;M tokens of paged KV-cache at FP16 KV. That is the difference between 4 concurrent users and 64.</p>
+            <p>NVFP4 frees ~100&nbsp;GB of HBM on a single B200, which is ~300&nbsp;k tokens of paged KV-cache at FP16 KV (Llama-3-70B: 320&nbsp;KB/token). That is the difference between 4 concurrent users and 64.</p>
         </div>
         <div class="diagram-panel accent-border">
             <h4>Energy per token</h4>
